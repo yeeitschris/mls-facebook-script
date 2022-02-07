@@ -1,0 +1,1 @@
+Use this folder for any test scripts or things of note that you'd like to share during the learning phase of sprint 0.
