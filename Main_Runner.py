@@ -32,7 +32,7 @@ def replacer(s, newstring, index, nofail=False):
     # insert the new string between "slices" of the original
     return s[:index] + newstring + s[index + 1:]
 
-
+#git test
 
 def img_downloader(image_url):
     
