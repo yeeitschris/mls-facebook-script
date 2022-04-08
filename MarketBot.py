@@ -2,18 +2,26 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+import sys
 
 class FB:
-    def __init__(self, email, password, webdriver_path):
-        self.email = email
-        self.password = password
-        self.webdriver_path = webdriver_path
-        self.driver = webdriver.Chrome(executable_path=self.webdriver_path)
+    def __init__(self):
+        self.email = input("Enter your Facebook email: ")
+        self.password = input("Enter your Facebook password: ")
+        self.browser = input("Enter your browser (Chrome, Edge, or Firefox): ")
         self.fb_url = "https://www.facebook.com/"
         self.marketplace_url = "https://www.facebook.com/marketplace"
+
+    def launchBrowser(self):
+        if self.browser == 'Chrome':
+            self.driver = webdriver.Chrome("WebDrivers/chromedriver.exe")
+        elif self.browser == 'Edge':
+            self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
+        elif self.browser == 'Firefox':
+            self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
+        else:
+            sys.exit("Invalid browser!")
         self.driver.get(self.fb_url)
-        self.login()
-        self.marketplace()
 
     def login(self):
         try:
@@ -24,8 +32,5 @@ class FB:
             print("Something went wrong logging in.")
 
     def marketplace(self):
-        try:
-            marketplace_navigate = self.driver.get(self.marketplace_url)
-            create_listing_click = self.driver.find_element(By.NAME, "Create new listing").click()
-        except Exception:
-            print("Something went wrong in the Marketplace.")
+        marketplace_navigate = self.driver.get(self.marketplace_url)
+        create_listing_click = self.driver.get("https://www.facebook.com/marketplace/create")
