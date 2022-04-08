@@ -1,0 +1,19 @@
+body{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+input{
+    width: 300px;
+    height: 40px;
+    border: none;
+    border-radius: 7px;
+    background-color: rgba(0,0,0,0.7);
+    color: white;
+    font-size: 18px;
+    padding-left: 10px;
+}

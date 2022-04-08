@@ -1,0 +1,12 @@
+{
+  "name": "MLS Bot",
+  "version": "1.0.0",
+  "description": "GUI for MLS Bot",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {"electron": "^11.1.1"},
+  "author": "Joan Garcia-Cruz",
+  "license": "ISC"
+}
