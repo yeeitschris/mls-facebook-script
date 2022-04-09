@@ -31,6 +31,6 @@ class FB:
         except Exception:
             print("Something went wrong logging in.")
 
-    def marketplace(self):
-        marketplace_navigate = self.driver.get(self.marketplace_url)
-        create_listing_click = self.driver.get("https://www.facebook.com/marketplace/create")
+    # def createListingFromMLS(self, site_id):
+        # self.driver.get("https://www.facebook.com/marketplace/create")
+        # if site_id == 'Bright':

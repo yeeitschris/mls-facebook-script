@@ -17,6 +17,7 @@ class MLSBot:
         self.username = input("Enter your username: ")
         self.password = input("Enter your password: ")
         self.browser = input("Enter your browser (Chrome, Edge, or Firefox): ")
+        self.site_id = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
 
     def initDriver(self):
         if self.browser == 'Chrome':
@@ -29,18 +30,22 @@ class MLSBot:
             sys.exit("Invalid browser!")
 
     def loginMLS(self):
-        self.driver.get("https://login.brightmls.com/login")
+        if self.site_id == 'Bright':
+            self.driver.get("https://login.brightmls.com/login")
+            found = None
+            while found is None:
+                try:
+                    user = self.driver.find_element(By.ID, "username")
+                    pw = self.driver.find_element(By.ID, "password")
+                    login = self.driver.find_element_by_class_name("MuiButton-label")
+                    found = 'done'
+                except:
+                    pass
+            user.send_keys(self.username)
+            pw.send_keys(self.password)
+            login.click()
 
-        elem = self.driver.find_element(By.ID, "username")
-        elem.send_keys(self.username)
-
-        elem = self.driver.find_element(By.ID, "password")
-        elem.send_keys(self.password)
-
-        elem = self.driver.find_element_by_class_name("MuiButton-label")
-        elem.click()
-
-    def CheckListings(self):
+    def GetListings(self):
         self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
 
         elem = self.driver.find_element_by_css_selector("option[title='VA']")
@@ -72,7 +77,7 @@ class MLSBot:
 
         #check with the current csv for any changes
         newList = open('D:\Chris\Downloads/Agent One-Line.csv')
-        curList = open('Data/Curren Listings/Current Listing.csv')
+        curList = open('Data/Current Listings/Current Listing.csv')
 
 
 
