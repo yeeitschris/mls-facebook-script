@@ -6,10 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MLS scraper</title>
     <link rel = "stylesheet" href = "style.css">
+    <script defer src = "render.js"></script>
 </head>
 <body>
-   <h1>Webdriver Path:</h1> 
-   <input type = "text" class = "path" placeholder  = "Enter Webdriver path">
-   <button>START</button>
+   <div class = "path">
+       <form id = "path" class = "form">
+        <input type = "text" placeholder="Webdriver PATH">
+    </form>
+   </div>
+   <div class = "MLSlogin">
+    <form id = "MLSlogin" class = "form">
+     <input type = "text" placeholder="MLS Username">
+     <input type = "password" placeholder="MLS Password">
+ </form>
+ <div class = "FBlogin">
+    <form id = "FBlogin" class = "form">
+     <input type = "text" placeholder="Facebook Username">
+     <input type = "password" placeholder="Facebook Password">
+ </form>
+</div>
+   <div class = "start-button">
+    <button>START</button>
+    <div class = "stop-button">
+        <button>STOP</button>
+    </div>
+</div>
 </body>
 </html>
