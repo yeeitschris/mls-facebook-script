@@ -1,16 +1,124 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-import time 
-import requests 
+from selenium.webdriver.common.by import By
+import time
+import requests
 from bs4 import BeautifulSoup
 import urllib.request
 from selenium.webdriver.common.keys import Keys
 from urllib.request import Request, urlopen
 import shutil
-import csv 
+import csv
 import os
 
+class MLSBot:
+    def __init__(self):
+        self.username = input("Enter your username: ")
+        self.password = input("Enter your password: ")
+        self.browser = input("Enter your browser (Chrome, Edge, or Firefox): ")
+        self.site_id = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
+
+    def initDriver(self):
+        if self.browser == 'Chrome':
+            self.driver = webdriver.Chrome("WebDrivers/chromedriver.exe")
+        elif self.browser == 'Edge':
+            self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
+        elif self.browser == 'Firefox':
+            self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
+        else:
+            sys.exit("Invalid browser!")
+
+    def loginMLS(self):
+        if self.site_id == 'Bright':
+            self.driver.get("https://login.brightmls.com/login")
+            found = None
+            while found is None:
+                try:
+                    user = self.driver.find_element(By.ID, "username")
+                    pw = self.driver.find_element(By.ID, "password")
+                    login = self.driver.find_element_by_class_name("MuiButton-label")
+                    found = 'done'
+                except:
+                    pass
+            user.send_keys(self.username)
+            pw.send_keys(self.password)
+            login.click()
+
+    def GetListings(self):
+        self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
+
+        elem = self.driver.find_element_by_css_selector("option[title='VA']")
+        elem.click()
+
+
+        elem = self.driver.find_element_by_css_selector("#m_ucSearchButtons_m_clblCount")
+        elem.click()
+
+
+        elem = self.driver.find_element_by_css_selector(".linkIcon.icon_search")
+        elem.click()
+
+
+
+
+        ##get csv
+        elem = self.driver.find_element_by_xpath("//a[@id='m_lnkCheckAllLink']")
+        elem.click()
+
+        elem = self.driver.find_element_by_css_selector(".linkIcon.icon_export")
+        elem.click()
+
+        elem = self.driver.find_element_by_css_selector("#m_btnExport")
+        elem.click()
+
+
+
+
+        #check with the current csv for any changes
+        newList = open('D:\Chris\Downloads/Agent One-Line.csv')
+        curList = open('Data/Current Listings/Current Listing.csv')
+
+
+
+    def replacer(s, newstring, index, nofail=False):
+        # raise an error if index is outside of the string
+        if not nofail and index not in range(len(s)):
+            raise ValueError("index outside given string")
+
+        # if not erroring, but the index is still not in the correct range..
+        if index < 0:  # add it to the beginning
+            return newstring + s
+        if index > len(s):  # add it to the end
+            return s + newstring
+
+        # insert the new string between "slices" of the original
+        return s[:index] + newstring + s[index + 1:]
+
+    #git test
+
+    def img_downloader(image_url, MLS_NUM, imgcount,path):
+
+    ## Set up the image URL and filename
+        filename = MLS_NUM + "-" + str(imgcount)
+
+    # Open the url image, set stream to True, this will return the stream content.
+        r = requests.get(image_url, stream = True)
+
+    # Check if the image was retrieved successfully
+        if r.status_code == 200:
+        # Set decode_content value to True, otherwise the downloaded image file's size will be zero.
+            r.raw.decode_content = True
+
+        # Open a local file with wb ( write binary ) permission.
+            with open(path + "/" + filename,'wb') as f:
+                shutil.copyfileobj(r.raw, f)
+
+            print('Image sucessfully Downloaded: ',filename)
+            return 1
+        else:
+            print('Image Couldn\'t be retreived')
+            return 0
 
 
 
@@ -18,6 +126,11 @@ import os
 
 
 
+#profile = webdriver.FirefoxProfile()
+#profile.set_preference("browser.download.folderList", 2)
+#profile.set_preference("browser.download.manager.showWhenStarting", False)
+#profile.set_preference("browser.download.dir", "C:/Users/Chris/Desktop")
+#profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
 
 parent_dir = "C:/Users/jeral/Desktop/Current Listings"
 
@@ -141,7 +254,7 @@ driver = webdriver.Firefox(profile,executable_path='C:/Users/jeral/Downloads/gec
 
 #or go into bright
 #pull image data
-#figure out how to get all the image links 
+#figure out how to get all the image links
 #download them, store them, upload them, then delete
 #add error checking
 #build a case for only one picture or no pictures
@@ -149,9 +262,9 @@ driver = webdriver.Firefox(profile,executable_path='C:/Users/jeral/Downloads/gec
 
 
 
-#find all the listings in the given zip code of new listings  
-#find store the information 
-#check if listing is already on facebook 
+#find all the listings in the given zip code of new listings
+#find store the information
+#check if listing is already on facebook
 
 
 
@@ -160,61 +273,15 @@ driver = webdriver.Firefox(profile,executable_path='C:/Users/jeral/Downloads/gec
 
 
 #bed = ""
-#bath = "" 
-#price = "" 
+#bath = ""
+#price = ""
 #address = ""
-#sqft == 
-
-
-driver.get("https://login.brightmls.com/login")
-time.sleep(5)
-
-elem = driver.find_element_by_name("username")
-elem.send_keys("mobhuiyan98")
-
-elem = driver.find_element_by_id("password")
-elem.send_keys("Iloverealestate4!")
-
-time.sleep(5)
-
-elem = driver.find_element_by_class_name("MuiButton-label")
-elem.click()
-
-time.sleep(5)
-
-driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
-
-time.sleep(5)
-elem = driver.find_element_by_css_selector("option[title='VA']")
-elem.click()
-
-time.sleep(5)
-
-elem = driver.find_element_by_css_selector("#m_ucSearchButtons_m_clblCount")
-elem.click()
-
-time.sleep(5)
-
-elem = driver.find_element_by_css_selector(".linkIcon.icon_search")
-elem.click() 
-
-time.sleep(5)
-
-
-
-##get csv
-elem = driver.find_element_by_xpath("//a[@id='m_lnkCheckAllLink']")
-elem.click()
-
-elem = driver.find_element_by_css_selector(".linkIcon.icon_export")
-elem.click()
-
-elem = driver.find_element_by_css_selector("#m_btnExport")
-elem.click()
+#sqft ==
 
 
 
 
+<<<<<<< HEAD
 #check with the current csv for any changes
 newList = csv.DictReader(open('C:/Users/jeral/Downloads/Agent One-Line.csv', 'r'))
 curList = csv.DictReader(open('C:/Users/jeral/Desktop/Current Listings/Current Listings.csv','r'))
@@ -312,17 +379,23 @@ print(len(new_list_comingsoon))
 
 
 #if listing no longer exists 
+=======
+#if there is new listing
+#create a new listing
+
+#if listing no longer exists
+>>>>>>> 86e19fc3fc21e910ac1049c9345824523b94282f
 #remove the listing and remove it from the list
 
 
 
 
 
-#modify the csv 
+#modify the csv
 
 
-#if the csv has changed 
-    #pull the MLS NUMBER    
+#if the csv has changed
+    #pull the MLS NUMBER
     #execute changes in facebook
 
 
@@ -335,9 +408,9 @@ print(len(new_list_comingsoon))
 
 
 
-#This temporrary for only one listings 
+#This temporrary for only one listings
 #need to pull the mls number from the export
-# and punch it in the xpath 
+# and punch it in the xpath
 
 #MLS_NUM = "VAFX2048786"
 
@@ -368,7 +441,7 @@ print(len(new_list_comingsoon))
 #elem = driver.find_element_by_css_selector("td[class='d115m5'] span[class='formula field NoPrint']")
 
 #img_count = str(elem.text).replace('(','')
-#img_count = img_count.replace(')','') 
+#img_count = img_count.replace(')','')
 #print(img_count)
 
 
@@ -376,14 +449,14 @@ print(len(new_list_comingsoon))
 #img_url = replacer(img_url,'',len(str(img_url)) - 1)
 
 
-#create new directory for new listing 
+#create new directory for new listing
 #path = os.path.join(parent_dir,MLS_NUM)
 
 #check if path exists
-#if os.path.isdir(path) != True: 
+#if os.path.isdir(path) != True:
 #    os.mkdir(path)
 
-#for x in range (int(img_count)): 
+#for x in range (int(img_count)):
  #   os.makedirs(os.path.dirname(path), exist_ok=True)
   #  img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
@@ -411,7 +484,7 @@ print(len(new_list_comingsoon))
 
 
 
-    
+
 
 ##HTML PARSER
 
@@ -444,13 +517,13 @@ print(len(new_list_comingsoon))
 
 #def brightLaunch():
 
-#def facebookLaunch(): 
+#def facebookLaunch():
 
 
-#def checkListings(): 
+#def checkListings():
 
 
-#def updateListings(): 
+#def updateListings():
 
 #def getElement():
 
@@ -458,13 +531,3 @@ print(len(new_list_comingsoon))
 #def doesListingExist():
 
 #def pullListing():
-    
-
-
-
-
-
-
-
-
-
