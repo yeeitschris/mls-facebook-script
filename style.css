@@ -17,3 +17,25 @@ input{
     font-size: 18px;
     padding-left: 10px;
 }
+.start-button button{
+    margin: 5px;
+    width: 150px;
+    height: 40px;
+    border: none;
+    border-radius: 7px;
+    color: rgb(255, 255, 255);
+    font-size: 18px;
+    padding-left: 10px;
+    background-color: rgba(109, 231, 115, 0.7);
+}
+.stop-button button{
+    margin: 5px;
+    width: 150px;
+    height: 40px;
+    border: none;
+    border-radius: 7px;
+    color: rgb(255, 255, 255);
+    font-size: 18px;
+    padding-left: 10px;
+    background-color: rgba(255, 0, 0, 0.7);
+}

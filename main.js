@@ -1,4 +1,4 @@
-const {app, BrowserWindow} = require("electron");
+const {app, BrowserWindow, ipcMain} = require("electron");
 
 let win = null;
 
@@ -16,3 +16,5 @@ const createWindow = () => {
 };
 
 app.whenReady().then(createWindow);
+
+//ipcMain.on('event');
