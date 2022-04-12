@@ -1,6 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.edge.options import Options
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 import time
 import requests
@@ -19,65 +21,72 @@ class MLSBot:
         self.browser = input("Enter your browser (Chrome, Edge, or Firefox): ")
         self.site_id = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
 
+    def try_find_element(self, type, target):
+        found = None
+        while found is None:
+            try:
+                elem = self.driver.find_element(type, target)
+                found = 'done'
+            except:
+                pass
+        return elem
+
     def initDriver(self):
+        data_path = os.getcwd() + "\\Data\\"
+        prefs = {"download.default_directory" : data_path}
         if self.browser == 'Chrome':
-            self.driver = webdriver.Chrome("WebDrivers/chromedriver.exe")
+            chromeOptions = webdriver.ChromeOptions()
+            chromeOptions.add_experimental_option("prefs", prefs)
+            self.driver = webdriver.Chrome(chrome_options=chromeOptions, executable_path="WebDrivers/chromedriver.exe")
         elif self.browser == 'Edge':
-            self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
+            # self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
+            edgeOptions = webdriver.EdgeOptions()
+            edgeOptions.add_experimental_option("prefs", prefs)
+            self.driver = webdriver.Edge(options = edgeOptions, executable_path="WebDrivers/msedgedriver.exe")
         elif self.browser == 'Firefox':
-            self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
+            # self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
+            firefoxOptions = Options()
+            firefoxOptions.set_preference("browser.download.folderList", 2)
+            firefoxOptions.set_preference("browser.download.dir", data_path)
+            self.driver = webdriver.Firefox(options = firefoxOptions, executable_path="WebDrivers/geckodriver.exe")
         else:
             sys.exit("Invalid browser!")
 
     def loginMLS(self):
         if self.site_id == 'Bright':
-            self.driver.get("https://login.brightmls.com/login")
-            found = None
-            while found is None:
-                try:
-                    user = self.driver.find_element(By.ID, "username")
-                    pw = self.driver.find_element(By.ID, "password")
-                    login = self.driver.find_element_by_class_name("MuiButton-label")
-                    found = 'done'
-                except:
-                    pass
+            bright_login = self.driver.get("https://login.brightmls.com/login")
+            user = self.try_find_element(By.ID, "username")
+            pw = self.try_find_element(By.ID, "password")
             user.send_keys(self.username)
             pw.send_keys(self.password)
+            login = self.try_find_element(By.CSS_SELECTOR, ".MuiButton-label")
             login.click()
 
     def GetListings(self):
-        self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
+        if self.site_id == 'Bright':
+            search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
 
-        elem = self.driver.find_element_by_css_selector("option[title='VA']")
-        elem.click()
+            elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
+            elem.click()
 
+            elem = self.try_find_element(By.CSS_SELECTOR, "#m_ucSearchButtons_m_clblCount")
+            elem.click()
 
-        elem = self.driver.find_element_by_css_selector("#m_ucSearchButtons_m_clblCount")
-        elem.click()
+            elem = self.try_find_element(By.CSS_SELECTOR, ".linkIcon.icon_search")
+            elem.click()
 
+            elem = self.try_find_element(By.ID, "m_lnkCheckAllLink")
+            elem.click()
 
-        elem = self.driver.find_element_by_css_selector(".linkIcon.icon_search")
-        elem.click()
+            elem = self.try_find_element(By.CSS_SELECTOR, ".icon_export")
+            elem.click()
 
+            elem = self.try_find_element(By.ID, "m_btnExport")
+            elem.click()
 
-
-
-        ##get csv
-        elem = self.driver.find_element_by_xpath("//a[@id='m_lnkCheckAllLink']")
-        elem.click()
-
-        elem = self.driver.find_element_by_css_selector(".linkIcon.icon_export")
-        elem.click()
-
-        elem = self.driver.find_element_by_css_selector("#m_btnExport")
-        elem.click()
-
-
-
-
-        #check with the current csv for any changes
-        newList = open('D:\Chris\Downloads/Agent One-Line.csv')
-        curList = open('Data/Current Listings/Current Listing.csv')
+            #check with the current csv for any changes
+            # newList = open('D:\Chris\Downloads/Agent One-Line.csv')
+            # curList = open('Data/Current Listings/Current Listing.csv')
 
 
 

@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 import sys
 
 class FB:
@@ -31,6 +32,8 @@ class FB:
         except Exception:
             print("Something went wrong logging in.")
 
-    # def createListingFromMLS(self, site_id):
-        # self.driver.get("https://www.facebook.com/marketplace/create")
-        # if site_id == 'Bright':
+    def createListingFromMLS(self, site_id):
+        self.driver.get("https://www.facebook.com/marketplace/create/rental")
+        if site_id == 'Bright':
+            property_type = WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, "//*[@aria-label='Home for Sale or Rent']")))
+            property_type.click()
