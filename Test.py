@@ -18,6 +18,7 @@ test.initDriver()
 test.loginMLS()
 time.sleep(10)
 test.GetListings()
+test.addListing("VAFX2059726")
 time.sleep(100)
 
 # MarketBot Test
