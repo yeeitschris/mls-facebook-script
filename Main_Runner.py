@@ -70,6 +70,10 @@ class MLSBot:
 
     def GetListings(self):
         if self.site_id == 'Bright':
+            old_file = os.path.join(self.data_path, 'Agent One-Line.csv')
+            if os.path.exists(old_file):
+                os.remove(old_file)
+
             search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
 
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
@@ -89,12 +93,6 @@ class MLSBot:
 
             elem = self.try_find_element(By.ID, "m_btnExport")
             elem.click()
-
-            #check with the current csv for any changes
-            # newList = open('D:\Chris\Downloads/Agent One-Line.csv')
-            # curList = open('Data/Current Listings/Current Listing.csv')
-
-
 
     def replacer(s, newstring, index, nofail=False):
         # raise an error if index is outside of the string
@@ -200,68 +198,6 @@ class MLSBot:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
-
-
-
-
-
-
-
-
-
-    def replacer(s, newstring, index, nofail=False):
-        # raise an error if index is outside of the string
-        if not nofail and index not in range(len(s)):
-            raise ValueError("index outside given string")
-
-        # if not erroring, but the index is still not in the correct range..
-        if index < 0:  # add it to the beginning
-            return newstring + s
-        if index > len(s):  # add it to the end
-            return s + newstring
-
-        # insert the new string between "slices" of the original
-        return s[:index] + newstring + s[index + 1:]
-
-    #git test
-
-    def img_downloader(image_url, MLS_NUM, imgcount,path):
-
-    ## Set up the image URL and filename
-        filename = MLS_NUM + "-" + str(imgcount)
-
-    # Open the url image, set stream to True, this will return the stream content.
-        r = requests.get(image_url, stream = True)
-
-    # Check if the image was retrieved successfully
-        if r.status_code == 200:
-        # Set decode_content value to True, otherwise the downloaded image file's size will be zero.
-            r.raw.decode_content = True
-
-        # Open a local file with wb ( write binary ) permission.
-            with open(path + "/" + filename,'wb') as f:
-                shutil.copyfileobj(r.raw, f)
-
-            print('Image sucessfully Downloaded: ',filename)
-            return 1
-        else:
-            print('Image Couldn\'t be retreived')
-            return 0
-
-
-
-
-
-
-
-# profile = webdriver.FirefoxProfile()
-# profile.set_preference("browser.download.folderList", 2)
-# profile.set_preference("browser.download.manager.showWhenStarting", False)
-# profile.set_preference("browser.download.dir", "C:/Users/jeral/Desktop/Current Listings")
-# profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
-
-# driver = webdriver.Firefox(profile,executable_path='C:/Users/jeral/Downloads/geckodriver-v0.30.0-win64/geckodriver.exe')
-
 #go in to zillow
 #check existing listings
 
@@ -297,6 +233,10 @@ class MLSBot:
 # <<<<<<< HEAD
 #check with the current csv for any changes
     def checkListings(self):
+        new_file = os.path.join(self.data_path, 'Current Listings.csv')
+        if not os.path.exists(new_file):
+            file = open(self.data_path + 'Current Listings.csv', 'w+')
+            file.close()
         newList = csv.DictReader(open('Data/Agent One-Line.csv', 'r'))
         curList = csv.DictReader(open('Data/Current Listings.csv','r'))
 
