@@ -4,6 +4,8 @@ from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.edge.options import Options
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -13,6 +15,7 @@ from urllib.request import Request, urlopen
 import shutil
 import csv
 import os
+import sys
 
 class MLSBot:
     def __init__(self):
@@ -25,13 +28,12 @@ class MLSBot:
             self.data_path = ""
 
     def try_find_element(self, type, target):
-        found = None
-        while found is None:
-            try:
-                elem = self.driver.find_element(type, target)
-                found = 'done'
-            except:
-                pass
+        elem = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((type, target))
+        )
+        if elem is None:
+            self.driver.quit()
+            sys.exit("ERROR. Element couldn't be found. Check credentials, website, and connection.")
         return elem
 
     def initDriver(self):
@@ -65,8 +67,10 @@ class MLSBot:
             pw = self.try_find_element(By.ID, "password")
             user.send_keys(self.username)
             pw.send_keys(self.password)
-            login = self.try_find_element(By.CSS_SELECTOR, ".MuiButton-label")
-            login.click()
+            login = self.try_find_element(By.CSS_SELECTOR, ".MuiButton-label").click()
+            wait = WebDriverWait(self.driver, 10).until(
+                EC.title_is('Dashboard | Bright MLS')
+            )
 
     def GetListings(self):
         if self.site_id == 'Bright':

@@ -13,6 +13,15 @@ class FB:
         self.fb_url = "https://www.facebook.com/"
         self.marketplace_url = "https://www.facebook.com/marketplace"
 
+    def try_find_element(self, type, target):
+        elem = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((type, target))
+        )
+        if elem is None:
+            self.driver.quit()
+            sys.exit("ERROR. Element couldn't be found. Check credentials, website, and connection.")
+        return elem
+
     def launchBrowser(self):
         if self.browser == 'Chrome':
             self.driver = webdriver.Chrome("WebDrivers/chromedriver.exe")
@@ -25,12 +34,9 @@ class FB:
         self.driver.get(self.fb_url)
 
     def login(self):
-        try:
-            email_fill = self.driver.find_element(By.ID, "email").send_keys(self.email)
-            pass_fill = self.driver.find_element(By.ID, "pass").send_keys(self.password)
-            login_click = self.driver.find_element(By.NAME, "login").click()
-        except Exception:
-            print("Something went wrong logging in.")
+        email_fill = self.try_find_element(By.ID, "email").send_keys(self.email)
+        pass_fill = self.try_find_element(By.ID, "pass").send_keys(self.password)
+        login_click = self.try_find_element(By.NAME, "login").click()
 
     def createListingFromMLS(self, site_id):
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
