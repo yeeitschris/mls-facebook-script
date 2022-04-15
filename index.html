@@ -9,9 +9,26 @@
     <script defer src = "render.js"></script>
 </head>
 <body>
+    <h1>MLS_Bot</h1>
+    <h3>Input your Webdriver and Account information to pull postings!</h3>
    <div class = "path">
-       <form id = "path" class = "form">
-        <input type = "text" placeholder="Webdriver PATH">
+       <form id = "path" class = "browser">
+        <select name = "browser" id = "browser" required>
+            <option value disabled selected hidden>Select your Browser</option>
+            <option value = "Chrome">Chrome</option> 
+            <option value = "Firefox">Firefox</option> 
+            <option value = "Edge">Edge</option> 
+        </select>
+    </form>
+   </div>
+   <div class = "MLS_site">
+    <form id = "MLS" class = "MLS_site">
+        <select name = "MLS_site" id = "MLS_site" required>
+            <option value disabled selected hidden>Select MLS site</option>
+            <option value = "Bright">Bright</option>
+            <option value = "Zillow">Zillow</option>
+            <option value = "Redfin">Redfin</option>
+        </select>
     </form>
    </div>
    <div class = "MLSlogin">
@@ -24,12 +41,7 @@
      <input type = "text" placeholder="Facebook Username">
      <input type = "password" placeholder="Facebook Password">
  </form>
-</div>
-   <div class = "start-button">
-    <button>START</button>
-    <div class = "stop-button">
-        <button>STOP</button>
-    </div>
-</div>
+ <button class = start-button>START</button>
+ <button class = stop-button>STOP</button>
 </body>
 </html>
