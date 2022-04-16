@@ -12,19 +12,17 @@ import time
 # Downloads path: D:\Chris\Downloads
 
 # MLS Test
-print("This is a test for MLS integration.")
-test = MLSBot()
-test.initDriver()
-test.loginMLS()
-time.sleep(10)
-test.GetListings()
-test.addListing("VAFX2059726")
-time.sleep(100)
+# print("This is a test for MLS integration.")
+# test = MLSBot()
+# test.initDriver()
+# test.loginMLS()
+# test.GetListings()
 
 # MarketBot Test
-# print("This is a test for Facebook Marketplace login.")
-# test = FB()
-# test.launchBrowser()
-# test.login()
-# test.createListingFromMLS('Bright')
-# time.sleep(5000)
+print("This is a test for Facebook Marketplace login.")
+test = FB()
+test.initDriver()
+test.loginFB()
+time.sleep(5)
+test.createListingFromMLS("Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
+time.sleep(5000)

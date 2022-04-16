@@ -6,6 +6,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from getpass import getpass
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -20,7 +21,7 @@ import sys
 class MLSBot:
     def __init__(self):
         self.username = input("Enter your username: ")
-        self.password = input("Enter your password: ")
+        self.password = getpass("Enter your password: ")
         self.browser = input("Enter your browser (Chrome, Edge, or Firefox): ")
         self.site_id = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
         self.data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
@@ -45,18 +46,18 @@ class MLSBot:
         if self.browser == 'Chrome':
             chromeOptions = webdriver.ChromeOptions()
             chromeOptions.add_experimental_option("prefs", prefs)
-            self.driver = webdriver.Chrome(chrome_options=chromeOptions, executable_path="WebDrivers/chromedriver.exe")
+            self.driver = webdriver.Chrome(options = chromeOptions, executable_path = "WebDrivers/chromedriver.exe")
         elif self.browser == 'Edge':
             # self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
             edgeOptions = webdriver.EdgeOptions()
             edgeOptions.add_experimental_option("prefs", prefs)
-            self.driver = webdriver.Edge(options = edgeOptions, executable_path="WebDrivers/msedgedriver.exe")
+            self.driver = webdriver.Edge(options = edgeOptions, executable_path = "WebDrivers/msedgedriver.exe")
         elif self.browser == 'Firefox':
             # self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
             firefoxOptions = Options()
             firefoxOptions.set_preference("browser.download.folderList", 2)
             firefoxOptions.set_preference("browser.download.dir", self.data_path)
-            self.driver = webdriver.Firefox(options = firefoxOptions, executable_path="WebDrivers/geckodriver.exe")
+            self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
         else:
             sys.exit("Invalid browser!")
 
@@ -242,8 +243,10 @@ class MLSBot:
             file = open(self.data_path + 'Current Listings.csv', 'w+')
             file.close()
         newList = csv.DictReader(open('Data/Agent One-Line.csv', 'r'))
+        # Add code to create/overwrite current listings
         curList = csv.DictReader(open('Data/Current Listings.csv','r'))
 
+        # Only active MLS numbers
         new_list_active = []
         new_list_comingsoon = []
         cur_list_active = []
@@ -257,7 +260,6 @@ class MLSBot:
 
             if line['Status'] == 'C/S':
                 new_list_comingsoon.append(line['MLS #'])
-
 
         #current list
         for line in curList:
@@ -281,8 +283,6 @@ class MLSBot:
         cur_list_active = list(set(new_list_active) & set(cur_list_active))
         cur_list_comingsoon = list(set(new_list_comingsoon) & set(cur_list_comingsoon))
 
-
-
         for mls_num in new_list_active:
             addListing(mls_num.replace("'",""))
 
@@ -301,6 +301,11 @@ class MLSBot:
 
         print(len(new_list_active))
         print(len(new_list_comingsoon))
+
+        old_file = os.path.join(self.data_path, 'Current Listings.csv')
+        if os.path.exists(old_file):
+            os.remove(old_file)
+        os.rename(self.data_path + "\\Agent One-Line.csv", self.data_path + "\\Current Listings.csv")
 
 
 
