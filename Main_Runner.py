@@ -1,3 +1,13 @@
+"""
+
+Module for combinatorial webscraping of MLS property websites and automated posting to the Facebook Marketplace.
+
+Uses the Selenium Python library to automate these processes.
+Created for CS 321 Section 004, Group 5. George Mason University, Spring 2022.
+
+Authors: Christopher Yi and Mohammed Bhuiyan
+"""
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
@@ -19,7 +29,33 @@ import os
 import sys
 
 class MLSBot:
+    """
+
+    Creates a web scraper for MLS listings from Bright, Redfin, and Zillow.
+
+    Users must be realtors or those with similar credentials to access MLS websites.
+    Utilizes the Selenium Python library to automate its processes.
+    Users must enter login credentials, browser, target website, and a path for data.
+    This Data directory will hold CSVs for available listings and images of the properties.
+    """
     def __init__(self, username, password, browser, site_id, data_path):
+        """
+
+        Inits necessary variables for the MLS Bot.
+
+        Parameter username: The email/username/equivalent for a particular MLS website.
+
+        Parameter password: The password for a particular MLS website.
+
+        Parameter browser: The selected browser for the Selenium webdriver.
+        Precondition: Limited to Chrome, Edge, or Firefox
+
+        Parameter site_id: The selected MLS website for scraping.
+        Precondition: Limited to Bright, Redfin, or Zillow
+
+        Parameter data_path: The targeted repository to save MLS listings and images.
+        Precondition: blank to default to project repository
+        """
         self.username = username
         self.password = password
         self.browser = browser
@@ -29,6 +65,19 @@ class MLSBot:
             self.data_path = ""
 
     def try_find_element(self, type, target):
+        """
+
+        Wrapper method for finding elements.
+
+        Implements an in-built wait function. Searches for elements for 10 seconds.
+        Exits and prints error message if not found in time, returns if successful.
+
+        Parameter type: The type of element being searched for.
+        Precondition: Must comply with the selected types supported by the find_element Selenium function
+
+        Parameter target: The target element being searched for.
+        Precondition: Must be an existing web element or search will fail
+        """
         elem = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((type, target))
         )
@@ -38,6 +87,14 @@ class MLSBot:
         return elem
 
     def initDriver(self):
+        """
+
+        Initializes the Selenium webdriver based on user parameters.
+
+        Sets up data path based on user input. Defaults to within the project directory.
+        Initializes webdriver for Chrome, Edge, or Firefox with settings to suppress popup notifications.
+        Invalid choices will exit and print error.
+        """
         if self.data_path == "":
             self.data_path = os.getcwd() + "\\Data\\"
         else:
@@ -45,16 +102,28 @@ class MLSBot:
         prefs = {"download.default_directory" : self.data_path}
         if self.browser == 'Chrome':
             chromeOptions = webdriver.ChromeOptions()
+            chromeOptions.add_argument("--disable-infobars")
+            chromeOptions.add_argument("start-maximized")
+            chromeOptions.add_argument("--disable-extensions")
+            chromeOptions.add_argument("--disable-notifications")
             chromeOptions.add_experimental_option("prefs", prefs)
             self.driver = webdriver.Chrome(options = chromeOptions, executable_path = "WebDrivers/chromedriver.exe")
         elif self.browser == 'Edge':
             # self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
             edgeOptions = webdriver.EdgeOptions()
+            edgeOptions.add_argument("--disable-infobars")
+            edgeOptions.add_argument("start-maximized")
+            edgeOptions.add_argument("--disable-extensions")
+            edgeOptions.add_argument("--disable-notifications")
             edgeOptions.add_experimental_option("prefs", prefs)
             self.driver = webdriver.Edge(options = edgeOptions, executable_path = "WebDrivers/msedgedriver.exe")
         elif self.browser == 'Firefox':
             # self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
             firefoxOptions = Options()
+            firefoxOptions.add_argument("--disable-infobars")
+            firefoxOptions.add_argument("start-maximized")
+            firefoxOptions.add_argument("--disable-extensions")
+            firefoxOptions.add_argument("--disable-notifications")
             firefoxOptions.set_preference("browser.download.folderList", 2)
             firefoxOptions.set_preference("browser.download.dir", self.data_path)
             self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
@@ -62,6 +131,10 @@ class MLSBot:
             sys.exit("Invalid browser!")
 
     def loginMLS(self):
+        """
+
+        Logs in to selected MLS website with user's credentials.
+        """
         if self.site_id == 'Bright':
             bright_login = self.driver.get("https://login.brightmls.com/login")
             user = self.try_find_element(By.ID, "username")
@@ -74,6 +147,10 @@ class MLSBot:
             )
 
     def GetListings(self):
+        """
+
+        Searches for and retrives listings from selected MLS website.
+        """
         if self.site_id == 'Bright':
             old_file = os.path.join(self.data_path, 'Agent One-Line.csv')
             if os.path.exists(old_file):
@@ -138,18 +215,6 @@ class MLSBot:
             print('Image Couldn\'t be retreived')
             return 0
 
-
-
-
-
-
-
-#profile = webdriver.FirefoxProfile()
-#profile.set_preference("browser.download.folderList", 2)
-#profile.set_preference("browser.download.manager.showWhenStarting", False)
-#profile.set_preference("browser.download.dir", "C:/Users/Chris/Desktop")
-#profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/x-gzip")
-
     def addListing(MLS_NUM):
         pullListingImg(MLS_NUM)
 
@@ -203,40 +268,6 @@ class MLSBot:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
-#go in to zillow
-#check existing listings
-
-#or go into bright
-#pull image data
-#figure out how to get all the image links
-#download them, store them, upload them, then delete
-#add error checking
-#build a case for only one picture or no pictures
-
-
-
-
-#find all the listings in the given zip code of new listings
-#find store the information
-#check if listing is already on facebook
-
-
-
-#add new listing function
-#remove listing function
-
-
-#bed = ""
-#bath = ""
-#price = ""
-#address = ""
-#sqft ==
-
-
-
-
-# <<<<<<< HEAD
-#check with the current csv for any changes
     def checkListings(self):
         new_file = os.path.join(self.data_path, 'Current Listings.csv')
         if not os.path.exists(new_file):
@@ -309,7 +340,24 @@ class MLSBot:
 
 
 class MarketBot:
+    """
+
+    Creates a web scraper to automate posting and editing Facebook Marketplace listings for MLS properties.
+
+    Designed to work with the MLS Bot after automated scraping of MLS listings.
+    """
     def __init__(self, email, password, browser):
+        """
+
+        Initializes the Selenium webdriver based on user parameters.
+
+        Parameter email: The email for the user's Facebook account.
+
+        Parameter password: The password for the user's Facebook account.
+
+        Parameter browser: The selected browser for the Selenium webdriver.
+        Precondition: Limited to Chrome, Edge, or Firefox
+        """
         self.email = email
         self.password = password
         self.browser = browser
@@ -317,6 +365,19 @@ class MarketBot:
         self.marketplace_url = "https://www.facebook.com/marketplace"
 
     def try_find_element(self, type, target):
+        """
+
+        Wrapper method for finding elements.
+
+        Implements an in-built wait function. Searches for elements for 10 seconds.
+        Exits and prints error message if not found in time, returns if successful.
+
+        Parameter type: The type of element being searched for.
+        Precondition: Must comply with the selected types supported by the find_element Selenium function
+
+        Parameter target: The target element being searched for.
+        Precondition: Must be an existing web element or search will fail
+        """
         elem = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((type, target))
         )
@@ -326,6 +387,13 @@ class MarketBot:
         return elem
 
     def initDriver(self):
+        """
+
+        Initializes the Selenium webdriver based on user parameters.
+
+        Initializes webdriver for Chrome, Edge, or Firefox with settings to suppress popup notifications.
+        Invalid choices will exit and print error.
+        """
         if self.browser == 'Chrome':
             chromeOptions = webdriver.ChromeOptions()
             chromeOptions.add_argument("--disable-infobars")
@@ -351,12 +419,20 @@ class MarketBot:
             sys.exit("Invalid browser!")
 
     def loginFB(self):
+        """
+
+        Logs in to Facebook with user's credentials.
+        """
         fb_navigate = self.driver.get(self.fb_url)
         email_fill = self.try_find_element(By.ID, "email").send_keys(self.email)
         pass_fill = self.try_find_element(By.ID, "pass").send_keys(self.password)
         login_click = self.try_find_element(By.NAME, "login").click()
 
     def createListingFromMLS(self, structure_type, num_beds, num_baths, price, address):
+        """
+
+        Creates Facebook Marketplace listing from given parameters.
+        """
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
         sale_or_rent = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Home for Sale or Rent"]').click()
         sale_types = self.driver.find_elements(By.CSS_SELECTOR, '[aria-selected="false"]')
