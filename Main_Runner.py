@@ -99,6 +99,9 @@ class MLSBot:
             self.data_path = os.getcwd() + "\\Data\\"
         else:
             self.data_path = self.data_path + "\\Data\\"
+        dirExists = os.path.exists(self.data_path)
+        if not dirExists:
+            os.makedirs(self.data_path)
         prefs = {"download.default_directory" : self.data_path}
         if self.browser == 'Chrome':
             chromeOptions = webdriver.ChromeOptions()
@@ -146,7 +149,7 @@ class MLSBot:
                 EC.title_is('Dashboard | Bright MLS')
             )
 
-    def GetListings(self):
+    def getListings(self):
         """
 
         Searches for and retrives listings from selected MLS website.
@@ -157,6 +160,10 @@ class MLSBot:
                 os.remove(old_file)
 
             search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
+
+            wait = WebDriverWait(self.driver, 10).until(
+                EC.title_is('Matrix')
+            )
 
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
             elem.click()
@@ -273,9 +280,9 @@ class MLSBot:
         if not os.path.exists(new_file):
             file = open(self.data_path + 'Current Listings.csv', 'w+')
             file.close()
-        newList = csv.DictReader(open('Data/Agent One-Line.csv', 'r'))
+        newList = csv.DictReader(open(self.data_path + 'Agent One-Line.csv', 'r'))
         # Add code to create/overwrite current listings
-        curList = csv.DictReader(open('Data/Current Listings.csv','r'))
+        curList = csv.DictReader(open(self.data_path + 'Current Listings.csv','r'))
 
         # Only active MLS numbers
         new_list_active = []
@@ -428,12 +435,15 @@ class MarketBot:
         pass_fill = self.try_find_element(By.ID, "pass").send_keys(self.password)
         login_click = self.try_find_element(By.NAME, "login").click()
 
-    def createListingFromMLS(self, structure_type, num_beds, num_baths, price, address):
+    def createListingFromMLS(self, MLS_NUM, structure_type, num_beds, num_baths, price, address):
         """
 
         Creates Facebook Marketplace listing from given parameters.
         """
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
+        image_folder = os.getcwd() + "\\Data\\" + "\\Pictures\\" + MLS_NUM
+        for path in os.listdir(image_folder):
+            photos_click = self.try_find_element(By.CSS_SELECTOR, "label:nth-child(2) > .mkhogb32").send_keys(os.path.join(image_folder, path))
         sale_or_rent = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Home for Sale or Rent"]').click()
         sale_types = self.driver.find_elements(By.CSS_SELECTOR, '[aria-selected="false"]')
         sale_click = sale_types[1].click()
@@ -460,12 +470,12 @@ data_path = input("Enter which directory you would like to save listings/images 
 MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path)
 MLS_test.initDriver()
 MLS_test.loginMLS()
-MLS_test.GetListings()
+MLS_test.getListings()
 
 # MarketBot Test
 FB_test = MarketBot(FB_email, FB_pw, browser_choice)
 FB_test.initDriver()
 FB_test.loginFB()
 time.sleep(5)
-FB_test.createListingFromMLS("Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
+FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
 time.sleep(5000)
