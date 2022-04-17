@@ -19,12 +19,12 @@ import os
 import sys
 
 class MLSBot:
-    def __init__(self):
-        self.username = input("Enter your username: ")
-        self.password = getpass("Enter your password: ")
-        self.browser = input("Enter your browser (Chrome, Edge, or Firefox): ")
-        self.site_id = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
-        self.data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
+    def __init__(self, username, password, browser, site_id, data_path):
+        self.username = username
+        self.password = password
+        self.browser = browser
+        self.site_id = site_id
+        self.data_path = data_path
         if not self.data_path:
             self.data_path = ""
 
@@ -308,189 +308,88 @@ class MLSBot:
         os.rename(self.data_path + "\\Agent One-Line.csv", self.data_path + "\\Current Listings.csv")
 
 
-
-##All new listings
-
-
-
-#newlistings = common(num_list_mlsNum,cur_list_mlsNum)
-
-
-
-
-##All the listings that have been removed
-
-#removedlistings = list(sevt(num_list_mlsNum).difference(cur_list_mlsNum))
-
-
-
-
-#print(len(newlistings))
-#print(len(removedlistings))
-
-#if os.path.exists("C:/Users/jeral/Downloads/Agent One-Line.csv"):
-#    os.remove("C:/Users/jeral/Downloads/Agent One-Line.csv")
-
-
-
-
-#if there is new listing
-#create a new listing
-
-
-
-
-
-#if listing no longer exists
-# =======
-#if there is new listing
-#create a new listing
-
-#if listing no longer exists
-# >>>>>>> 86e19fc3fc21e910ac1049c9345824523b94282f
-#remove the listing and remove it from the list
-
-
-
-
-
-#modify the csv
-
-
-#if the csv has changed
-    #pull the MLS NUMBER
-    #execute changes in facebook
-
-
-
-
-
-
-
-
-
-
-
-#This temporrary for only one listings
-#need to pull the mls number from the export
-# and punch it in the xpath
-
-#MLS_NUM = "VAFX2048786"
-
-#elem = driver.find_element_by_xpath("//input[@id='ctl01_m_ucSpeedBar_m_tbSpeedBar']")
-#elem.clear()
-#elem.send_keys("VAFX2048786")
-#elem.send_keys(Keys.RETURN)
-
-#time.sleep(2)
-
-#content = driver.find_element_by_xpath("//a[normalize-space()='VAFX2048786']")
-
-#content.click()
-
-#time.sleep(1)
-
-#elem = driver.find_element_by_xpath("//img[@src='/Matrix/Images/cammulti.gif']")
-
-#elem.click()
-
-
-#elem = driver.find_element_by_xpath("//*[contains(@src,'Type=1&Size=4&')]")
-
-
-#img_url = str(elem.get_attribute('src'))
-
-
-#elem = driver.find_element_by_css_selector("td[class='d115m5'] span[class='formula field NoPrint']")
-
-#img_count = str(elem.text).replace('(','')
-#img_count = img_count.replace(')','')
-#print(img_count)
-
-
-
-#img_url = replacer(img_url,'',len(str(img_url)) - 1)
-
-
-#create new directory for new listing
-#path = os.path.join(parent_dir,MLS_NUM)
-
-#check if path exists
-#if os.path.isdir(path) != True:
-#    os.mkdir(path)
-
-#for x in range (int(img_count)):
- #   os.makedirs(os.path.dirname(path), exist_ok=True)
-  #  img_downloader(img_url + str(x),MLS_NUM, str(x),path)
-
-
-
-
-#### print(img_url)
-
-
-
-#driver.close()
-#print("Driver has successfully closed")
-
-
-#print("\n")
-#print(replace_string)
-
-#for x in range(len(elem)):
-#    print(elem[x].get_attribute('src'))
-
-
-
-
-######            print("Oops!  That was no valid number.  Try again...")
-
-
-
-
-
-##HTML PARSER
-
-
-
-
-
-#driver.get("http://www.facebook.com")
-#print(driver.title)
-#assert "Facebook" in driver.title
-#elem = driver.find_element_by_name("email")
-#elem.clear()
-#elem.send_keys("mobhuiyan1998@yahoo.com")
-
-#elem = driver.find_element_by_name("pass")
-#elem.send_keys("Orpon1998!")
-
-#elem = driver.find_element_by_name("login")
-#elem.click()
-
-
-#driver.get("https://www.facebook.com/marketplace/create/rental")
-
-
-#assert "No results found." not in driver.page_source
-
-
-
-
-
-#def brightLaunch():
-
-#def facebookLaunch():
-
-
-#def checkListings():
-
-
-#def updateListings():
-
-#def getElement():
-
-
-#def doesListingExist():
-
-#def pullListing():
+class MarketBot:
+    def __init__(self, email, password, browser):
+        self.email = email
+        self.password = password
+        self.browser = browser
+        self.fb_url = "https://www.facebook.com/"
+        self.marketplace_url = "https://www.facebook.com/marketplace"
+
+    def try_find_element(self, type, target):
+        elem = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((type, target))
+        )
+        if elem is None:
+            self.driver.quit()
+            sys.exit("ERROR. Element couldn't be found. Check credentials, website, and connection.")
+        return elem
+
+    def initDriver(self):
+        if self.browser == 'Chrome':
+            chromeOptions = webdriver.ChromeOptions()
+            chromeOptions.add_argument("--disable-infobars")
+            chromeOptions.add_argument("start-maximized")
+            chromeOptions.add_argument("--disable-extensions")
+            chromeOptions.add_argument("--disable-notifications")
+            self.driver = webdriver.Chrome(options = chromeOptions, executable_path = "WebDrivers/chromedriver.exe")
+        elif self.browser == 'Edge':
+            edgeOptions = webdriver.EdgeOptions()
+            edgeOptions.add_argument("--disable-infobars")
+            edgeOptions.add_argument("start-maximized")
+            edgeOptions.add_argument("--disable-extensions")
+            edgeOptions.add_argument("--disable-notifications")
+            self.driver = webdriver.Edge(options = edgeOptions, executable_path = "WebDrivers/msedgedriver.exe")
+        elif self.browser == 'Firefox':
+            firefoxOptions = Options()
+            firefoxOptions.add_argument("--disable-infobars")
+            firefoxOptions.add_argument("start-maximized")
+            firefoxOptions.add_argument("--disable-extensions")
+            firefoxOptions.add_argument("--disable-notifications")
+            self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
+        else:
+            sys.exit("Invalid browser!")
+
+    def loginFB(self):
+        fb_navigate = self.driver.get(self.fb_url)
+        email_fill = self.try_find_element(By.ID, "email").send_keys(self.email)
+        pass_fill = self.try_find_element(By.ID, "pass").send_keys(self.password)
+        login_click = self.try_find_element(By.NAME, "login").click()
+
+    def createListingFromMLS(self, structure_type, num_beds, num_baths, price, address):
+        self.driver.get("https://www.facebook.com/marketplace/create/rental")
+        sale_or_rent = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Home for Sale or Rent"]').click()
+        sale_types = self.driver.find_elements(By.CSS_SELECTOR, '[aria-selected="false"]')
+        sale_click = sale_types[1].click()
+        property_type = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Property type"]').click()
+        property_types = self.driver.find_elements(By.CSS_SELECTOR, '[aria-selected="false"]')
+        if "Apartment" in structure_type:
+            apartment_click = property_types[0].click()
+        beds_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Number of bedrooms"]').send_keys(num_beds)
+        baths_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Number of bathrooms"]').send_keys(num_baths)
+        price_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Price"]').send_keys(price)
+        address_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Property address"]').send_keys(address)
+        suggestion_click = self.try_find_element(By.CSS_SELECTOR, '[aria-selected="false"]').click()
+
+# Init variables
+browser_choice = input("Enter your browser (Chrome, Edge, or Firefox): ")
+MLS_username = input("Enter your MLS username: ")
+MLS_pw = getpass("Enter your MLS password: ")
+MLS_choice = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
+FB_email = input("Enter your Facebook email: ")
+FB_pw = getpass("Enter your Facebook password: ")
+data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
+
+# MLS Test
+MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path)
+MLS_test.initDriver()
+MLS_test.loginMLS()
+MLS_test.GetListings()
+
+# MarketBot Test
+FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+FB_test.initDriver()
+FB_test.loginFB()
+time.sleep(5)
+FB_test.createListingFromMLS("Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
+time.sleep(5000)
