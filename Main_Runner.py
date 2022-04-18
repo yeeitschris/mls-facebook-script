@@ -27,6 +27,7 @@ import shutil
 import csv
 import os
 import sys
+import random
 
 class MLSBot:
     """
@@ -149,7 +150,7 @@ class MLSBot:
                 EC.title_is('Dashboard | Bright MLS')
             )
 
-    def getListings(self):
+    def getListings(self,priceRange,zipcode):
         """
 
         Searches for and retrives listings from selected MLS website.
@@ -161,9 +162,10 @@ class MLSBot:
 
             search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
 
-            wait = WebDriverWait(self.driver, 10).until(
-                EC.title_is('Matrix')
-            )
+            self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").click()
+            self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").send_keys(zipcode)
+           ## self.driver.find_element(By.ID, "Fm6_Ctrl40_TB").click()
+            self.try_find_element(By.ID, "Fm6_Ctrl40_TB").send_keys(priceRange)
 
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
             elem.click()
@@ -183,7 +185,7 @@ class MLSBot:
             elem = self.try_find_element(By.ID, "m_btnExport")
             elem.click()
 
-    def replacer(s, newstring, index, nofail=False):
+    def replacer(self, s, newstring, index, nofail=False):
         # raise an error if index is outside of the string
         if not nofail and index not in range(len(s)):
             raise ValueError("index outside given string")
@@ -199,7 +201,7 @@ class MLSBot:
 
     #git test
 
-    def img_downloader(image_url, MLS_NUM, imgcount,path):
+    def img_downloader(self, image_url, MLS_NUM, imgcount,path):
 
     ## Set up the image URL and filename
         filename = MLS_NUM + "-" + str(imgcount)
@@ -222,38 +224,60 @@ class MLSBot:
             print('Image Couldn\'t be retreived')
             return 0
 
-    def addListing(MLS_NUM):
-        pullListingImg(MLS_NUM)
+    def addListings(self,priceRange,zipcode,num):
+
+        self.getListings(priceRange,zipcode)
+
+        # rnumber = random.sample(range(0,int(listNum)),int(num))
+
+        time.sleep(10)
+        # newList = csv.DictReader(open(self.data_path + 'Agent One-Line.csv', 'r'))
+        # print(newList[2])
+
+        with open(self.data_path + 'Agent One-Line.csv', 'r') as read_obj:
+            csv_dict_reader = csv.DictReader(read_obj)
+            iterable = list(csv_dict_reader)
+            rnumber = random.sample(range(0,int(len(iterable))), int(num))
+
+            for randList in rnumber:
+                self.pullListingImg(iterable[randList]['MLS #'])
 
 
-    def pullListingImg(MLS_NUM):
-        image_dir = self.data_path + '\\Current Listings\\'
+    def pullListingImg(self, MLS_NUM):
+        self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
+        image_dir = self.data_path + '\\Pictures\\'
+        dirExists = os.path.exists(image_dir)
+        if not dirExists:
+            os.makedirs(image_dir)
 
-        elem = driver.find_element_by_xpath("//input[@id='ctl01_m_ucSpeedBar_m_tbSpeedBar']")
+        elem = self.try_find_element(By.XPATH, "//input[@id='ctl01_m_ucSpeedBar_m_tbSpeedBar']")
         elem.clear()
         elem.send_keys(MLS_NUM)
         elem.send_keys(Keys.RETURN)
 
         time.sleep(2)
 
-        content = driver.find_element_by_xpath("//a[normalize-space()='VAFX2048786']")
+        content = self.try_find_element(By.XPATH, "//a[normalize-space()='" + str(MLS_NUM) + "']")
 
         content.click()
 
         time.sleep(1)
 
-        elem = driver.find_element_by_xpath("//img[@src='/Matrix/Images/cammulti.gif']")
+        try:
+            elem = self.try_find_element(By.XPATH, "//img[@src='/Matrix/Images/cammulti.gif']")
+        except:
+            elem = self.try_find_element(By.XPATH, "//img[@src='/Matrix/Images/cam.gif']")
 
         elem.click()
 
 
-        elem = driver.find_element_by_xpath("//*[contains(@src,'Type=1&Size=4&')]")
+        elem = self.try_find_element(By.XPATH, "//*[contains(@src,'Type=1&Size=4&')]")
 
 
         img_url = str(elem.get_attribute('src'))
 
 
-        elem = driver.find_element_by_css_selector("td[class='d115m5'] span[class='formula field NoPrint']")
+        elem = self.try_find_element(By.CSS_SELECTOR, "td[class='d115m5'] span[class='formula field NoPrint']")
 
         img_count = str(elem.text).replace('(','')
         img_count = img_count.replace(')','')
@@ -261,7 +285,7 @@ class MLSBot:
 
 
 
-        img_url = replacer(img_url,'',len(str(img_url)) - 1)
+        img_url = self.replacer(img_url,'',len(str(img_url)) - 1)
 
 
         #create new directory for new listing
@@ -273,7 +297,7 @@ class MLSBot:
         #Download the image
         for x in range (int(img_count)):
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            img_downloader(img_url + str(x),MLS_NUM, str(x),path)
+            self.img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
     def checkListings(self):
         new_file = os.path.join(self.data_path, 'Current Listings.csv')
@@ -470,12 +494,14 @@ data_path = input("Enter which directory you would like to save listings/images 
 MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path)
 MLS_test.initDriver()
 MLS_test.loginMLS()
-MLS_test.getListings()
+# MLS_test.getListings()
+MLS_test.addListings("300-400","20111",3)
+time.sleep(5000)
 
 # MarketBot Test
-FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-FB_test.initDriver()
-FB_test.loginFB()
-time.sleep(5)
-FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
-time.sleep(5000)
+# FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+# FB_test.initDriver()
+# FB_test.loginFB()
+# time.sleep(5)
+# FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
+# time.sleep(5000)
