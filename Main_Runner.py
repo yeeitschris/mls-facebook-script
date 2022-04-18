@@ -164,7 +164,7 @@ class MLSBot:
 
             self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").click()
             self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").send_keys(zipcode)
-           ## self.driver.find_element(By.ID, "Fm6_Ctrl40_TB").click()
+
             self.try_find_element(By.ID, "Fm6_Ctrl40_TB").send_keys(priceRange)
 
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
