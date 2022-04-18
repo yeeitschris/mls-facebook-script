@@ -39,7 +39,7 @@ class MLSBot:
     Users must enter login credentials, browser, target website, and a path for data.
     This Data directory will hold CSVs for available listings and images of the properties.
     """
-    def __init__(self, username, password, browser, site_id, data_path):
+    def __init__(self, username, password, browser, site_id, data_path, price_range, zip_code, num_properties):
         """
 
         Inits necessary variables for the MLS Bot.
@@ -61,9 +61,22 @@ class MLSBot:
         self.password = password
         self.browser = browser
         self.site_id = site_id
+        # Default data path if left blank
         self.data_path = data_path
         if not self.data_path:
             self.data_path = ""
+        # Price range is optional
+        self.price_range = price_range
+        if not self.price_range:
+            self.price_range = ""
+        # ZIP code is optional
+        self.zip_code = zip_code
+        if not self.zip_code:
+            self.zip_code = ""
+        # Number of properties is optional
+        self.num_properties = num_properties
+        if not self.num_properties:
+            self.num_properties = 0
 
     def try_find_element(self, type, target):
         """
@@ -150,7 +163,7 @@ class MLSBot:
                 EC.title_is('Dashboard | Bright MLS')
             )
 
-    def getListings(self,priceRange,zipcode):
+    def getListings(self):
         """
 
         Searches for and retrives listings from selected MLS website.
@@ -162,10 +175,12 @@ class MLSBot:
 
             search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
 
-            self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").click()
-            self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").send_keys(zipcode)
+            if self.zip_code != "":
+                self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").click()
+                self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").send_keys(self.zip_code)
 
-            self.try_find_element(By.ID, "Fm6_Ctrl40_TB").send_keys(priceRange)
+            if self.price_range != "":
+                self.try_find_element(By.ID, "Fm6_Ctrl40_TB").send_keys(self.price_range)
 
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
             elem.click()
@@ -224,9 +239,9 @@ class MLSBot:
             print('Image Couldn\'t be retreived')
             return 0
 
-    def addListings(self,priceRange,zipcode,num):
+    def addListings(self):
 
-        self.getListings(priceRange,zipcode)
+        self.getListings()
 
         # rnumber = random.sample(range(0,int(listNum)),int(num))
 
@@ -237,7 +252,10 @@ class MLSBot:
         with open(self.data_path + 'Agent One-Line.csv', 'r') as read_obj:
             csv_dict_reader = csv.DictReader(read_obj)
             iterable = list(csv_dict_reader)
-            rnumber = random.sample(range(0,int(len(iterable))), int(num))
+            if self.num_properties != 0:
+                rnumber = random.sample(range(0,int(len(iterable))), int(self.num_properties))
+            else:
+                rnumber = random.sample(range(0,int(len(iterable))), len(iterable))
 
             for randList in rnumber:
                 self.pullListingImg(iterable[randList]['MLS #'])
@@ -264,9 +282,9 @@ class MLSBot:
         time.sleep(1)
 
         try:
-            elem = self.try_find_element(By.XPATH, "//img[@src='/Matrix/Images/cammulti.gif']")
+            elem = self.driver.find_element(By.XPATH, "//img[@src='/Matrix/Images/cammulti.gif']")
         except:
-            elem = self.try_find_element(By.XPATH, "//img[@src='/Matrix/Images/cam.gif']")
+            elem = self.driver.find_element(By.XPATH, "//img[@src='/Matrix/Images/cam.gif']")
 
         elem.click()
 
@@ -489,13 +507,17 @@ MLS_choice = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin
 FB_email = input("Enter your Facebook email: ")
 FB_pw = getpass("Enter your Facebook password: ")
 data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
+price_range = input("Enter a desired price range (optional): ")
+zip_code = input("Enter a desired ZIP/postal code (optional): ")
+num_properties = input("Enter the number of properties you would like post (optional): ")
 
 # MLS Test
-MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path)
+MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
 MLS_test.initDriver()
 MLS_test.loginMLS()
 # MLS_test.getListings()
-MLS_test.addListings("300-400","20111",3)
+# MLS_test.addListings("300-400","20111",3)
+MLS_test.addListings()
 time.sleep(5000)
 
 # MarketBot Test
