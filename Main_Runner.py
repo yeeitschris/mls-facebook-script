@@ -500,16 +500,29 @@ class MarketBot:
         suggestion_click = self.try_find_element(By.CSS_SELECTOR, '[aria-selected="false"]').click()
 
 # Init variables
-browser_choice = input("Enter your browser (Chrome, Edge, or Firefox): ")
-MLS_username = input("Enter your MLS username: ")
-MLS_pw = getpass("Enter your MLS password: ")
-MLS_choice = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
-FB_email = input("Enter your Facebook email: ")
-FB_pw = getpass("Enter your Facebook password: ")
-data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
-price_range = input("Enter a desired price range (optional): ")
-zip_code = input("Enter a desired ZIP/postal code (optional): ")
-num_properties = input("Enter the number of properties you would like post (optional): ")
+# browser_choice = input("Enter your browser (Chrome, Edge, or Firefox): ")
+# MLS_username = input("Enter your MLS username: ")
+# MLS_pw = getpass("Enter your MLS password: ")
+# MLS_choice = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
+# FB_email = input("Enter your Facebook email: ")
+# FB_pw = getpass("Enter your Facebook password: ")
+# data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
+# price_range = input("Enter a desired price range (optional): ")
+# zip_code = input("Enter a desired ZIP/postal code (optional): ")
+# num_properties = input("Enter the number of properties you would like post (optional): ")
+
+# Electron input
+browser_choice = sys.argv[1]
+MLS_username = sys.argv[2]
+MLS_pw = sys.argv[3]
+MLS_choice = sys.argv[4]
+FB_email = sys.argv[5]
+FB_pw = sys.argv[6]
+data_path = sys.argv[7]
+price_range = sys.argv[8]
+zip_code = sys.argv[9]
+num_properties = sys.argv[10]
+sys.stdout.flush()
 
 # MLS Test
 MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
