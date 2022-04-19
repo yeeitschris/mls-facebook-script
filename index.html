@@ -13,7 +13,7 @@
     <h3>Input your Webdriver and Account information to pull postings!</h3>
    <div class = "path">
        <form id = "path" class = "browser">
-        <select name = "browser" id = "browser" required>
+        <select name = "browser" class = "browser_choice" id = "browser" required>
             <option value disabled selected hidden>Select your Browser</option>
             <option value = "Chrome">Chrome</option> 
             <option value = "Firefox">Firefox</option> 
@@ -23,7 +23,7 @@
    </div>
    <div class = "MLS_site">
     <form id = "MLS" class = "MLS_site">
-        <select name = "MLS_site" id = "MLS_site" required>
+        <select name = "MLS_site" class = "MLS_choice" id = "MLS_site" required>
             <option value disabled selected hidden>Select MLS site</option>
             <option value = "Bright">Bright</option>
             <option value = "Zillow">Zillow</option>
@@ -33,15 +33,19 @@
    </div>
    <div class = "MLSlogin">
     <form id = "MLSlogin" class = "form">
-     <input type = "text" placeholder="MLS Username">
-     <input type = "password" placeholder="MLS Password">
+     <input type = "text" class = "MLS_username" placeholder="MLS Username">
+     <input type = "password" class = "MLS_password" placeholder="MLS Password">
  </form>
  <div class = "FBlogin">
     <form id = "FBlogin" class = "form">
-     <input type = "text" placeholder="Facebook Username">
-     <input type = "password" placeholder="Facebook Password">
+     <input type = "text" class = "FB_email" placeholder="Facebook Email">
+     <input type = "password" class = "FB_password" placeholder="Facebook Password">
  </form>
- <button class = start-button>START</button>
+ <input type = "text" name = "data_path" class = "data_path" placeholder = "Output location" required>
+ <input type = "text" name = "price_range" class = "price_range" placeholder = "Price" required>
+ <input type = "text" name = "zip_code" class = "zip_code" placeholder = "Zipcode" required>
+ <input type = "text" name = "num_properties" class = "num_properties" placeholder = "Number of properties" required>
+ <button onclick = "sendInfo()" class = start-button>START</button>
  <button class = stop-button>STOP</button>
 </body>
 </html>
