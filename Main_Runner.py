@@ -364,19 +364,19 @@ class MLSBot:
         cur_list_comingsoon = list(set(new_list_comingsoon) & set(cur_list_comingsoon))
 
         for mls_num in new_list_active:
-            addListing(mls_num.replace("'",""))
+            self.addListing(mls_num.replace("'",""))
 
 
         for mls_num in new_list_comingsoon:
-            addListing(mls_num.replace("'",""))
+            self.addListing(mls_num.replace("'",""))
 
 
         for mls_num in remove_list_active:
-            removeListing(mls_num.replace("'",""))
+            self.removeListing(mls_num.replace("'",""))
 
 
         for mls_num in remove_list_comingsoon:
-            removeListing(mls_num.replace("'",""))
+            self.removeListing(mls_num.replace("'",""))
 
 
         print(len(new_list_active))
