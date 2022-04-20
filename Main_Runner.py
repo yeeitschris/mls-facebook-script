@@ -146,6 +146,7 @@ class MLSBot:
             self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
         else:
             sys.exit("Invalid browser!")
+        self.driver.minimize_window()
 
     def loginMLS(self):
         """
@@ -159,9 +160,13 @@ class MLSBot:
             user.send_keys(self.username)
             pw.send_keys(self.password)
             login = self.try_find_element(By.CSS_SELECTOR, ".MuiButton-label").click()
-            wait = WebDriverWait(self.driver, 10).until(
-                EC.title_is('Dashboard | Bright MLS')
-            )
+            try:
+                wait = WebDriverWait(self.driver, 10).until(
+                    EC.title_is('Dashboard | Bright MLS')
+                )
+            except:
+                self.driver.quit()
+                sys.exit("Bright MLS login failed. Check credentials or connection.")
 
     def getListings(self):
         """
@@ -169,34 +174,35 @@ class MLSBot:
         Searches for and retrives listings from selected MLS website.
         """
         if self.site_id == 'Bright':
+            # Deletes old Bright CSV.
             old_file = os.path.join(self.data_path, 'Agent One-Line.csv')
             if os.path.exists(old_file):
                 os.remove(old_file)
-
+            # Navigate to residential search page.
             search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
-
+            # Designate ZIP code, if any.
             if self.zip_code != "":
                 self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").click()
                 self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").send_keys(self.zip_code)
-
+            # Designate price range, if any.
             if self.price_range != "":
                 self.try_find_element(By.ID, "Fm6_Ctrl40_TB").send_keys(self.price_range)
-
+            # Designate Virginia properties.
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
             elem.click()
-
+            # Search for properties.
             elem = self.try_find_element(By.CSS_SELECTOR, "#m_ucSearchButtons_m_clblCount")
             elem.click()
-
+            # Show search results.
             elem = self.try_find_element(By.CSS_SELECTOR, ".linkIcon.icon_search")
             elem.click()
-
+            # Select all listings.
             elem = self.try_find_element(By.ID, "m_lnkCheckAllLink")
             elem.click()
-
+            # Choose to export listings.
             elem = self.try_find_element(By.CSS_SELECTOR, ".icon_export")
             elem.click()
-
+            # Export listings.
             elem = self.try_find_element(By.ID, "m_btnExport")
             elem.click()
 
@@ -218,48 +224,52 @@ class MLSBot:
 
     def img_downloader(self, image_url, MLS_NUM, imgcount,path):
 
-    ## Set up the image URL and filename
+        # Set up the image URL and filename
         filename = MLS_NUM + "-" + str(imgcount)
 
-    # Open the url image, set stream to True, this will return the stream content.
+        # Open the url image, set stream to True, this will return the stream content.
         r = requests.get(image_url, stream = True)
 
-    # Check if the image was retrieved successfully
+        # Check if the image was retrieved successfully
         if r.status_code == 200:
-        # Set decode_content value to True, otherwise the downloaded image file's size will be zero.
+            # Set decode_content value to True, otherwise the downloaded image file's size will be zero.
             r.raw.decode_content = True
 
-        # Open a local file with wb ( write binary ) permission.
+            # Open a local file with wb ( write binary ) permission.
             with open(path + "/" + filename,'wb') as f:
                 shutil.copyfileobj(r.raw, f)
-
             print('Image sucessfully Downloaded: ',filename)
             return 1
         else:
-            print('Image Couldn\'t be retreived')
+            print('Image could not be retrieved')
             return 0
 
     def addListings(self):
 
         self.getListings()
-
-        # rnumber = random.sample(range(0,int(listNum)),int(num))
-
-        time.sleep(10)
-        # newList = csv.DictReader(open(self.data_path + 'Agent One-Line.csv', 'r'))
-        # print(newList[2])
-
-        with open(self.data_path + 'Agent One-Line.csv', 'r') as read_obj:
-            csv_dict_reader = csv.DictReader(read_obj)
-            iterable = list(csv_dict_reader)
-            if self.num_properties != 0:
-                rnumber = random.sample(range(0,int(len(iterable))), int(self.num_properties))
+        file_wait = 0
+        while not os.path.exists(self.data_path + 'Agent One-Line.csv'):
+            time.sleep(1)
+            file_wait += 1
+            if file_wait > 10:
+                break
+        if os.path.exists(self.data_path + 'Agent One-Line.csv'):
+            listings_as_dict = csv.DictReader(open(self.data_path + 'Agent One-Line.csv', 'r'))
+            iterable = list(listings_as_dict)
+            if int(self.num_properties) < len(iterable):
+                if self.num_properties != 0:
+                    rnumber = random.sample(range(0,int(len(iterable))), int(self.num_properties))
+                else:
+                    self.driver.quit()
+                    sys.exit("You selected 0 properties.")
             else:
                 rnumber = random.sample(range(0,int(len(iterable))), len(iterable))
 
             for randList in rnumber:
                 self.pullListingImg(iterable[randList]['MLS #'])
-
+        else:
+            self.driver.quit()
+            sys.exit("Error. CSV file failed to download. Check search parameters or internet connection.")
 
     def pullListingImg(self, MLS_NUM):
         self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
@@ -466,6 +476,7 @@ class MarketBot:
             self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
         else:
             sys.exit("Invalid browser!")
+        self.driver.minimize_window()
 
     def loginFB(self):
         """
@@ -476,6 +487,15 @@ class MarketBot:
         email_fill = self.try_find_element(By.ID, "email").send_keys(self.email)
         pass_fill = self.try_find_element(By.ID, "pass").send_keys(self.password)
         login_click = self.try_find_element(By.NAME, "login").click()
+        # Log into Facebook
+        try:
+            wait = WebDriverWait(self.driver, 10).until(
+                EC.title_is('Facebook')
+            )
+        except:
+            self.driver.quit()
+            sys.exit("Facebook login failed. Check credentials or connection.")
+
 
     def createListingFromMLS(self, MLS_NUM, structure_type, num_beds, num_baths, price, address):
         """
@@ -528,15 +548,13 @@ sys.stdout.flush()
 MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
 MLS_test.initDriver()
 MLS_test.loginMLS()
-# MLS_test.getListings()
-# MLS_test.addListings("300-400","20111",3)
 MLS_test.addListings()
-time.sleep(5000)
+# time.sleep(5000)
 
 # MarketBot Test
-# FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-# FB_test.initDriver()
-# FB_test.loginFB()
-# time.sleep(5)
+FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+FB_test.initDriver()
+FB_test.loginFB()
+time.sleep(500)
 # FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
 # time.sleep(5000)
