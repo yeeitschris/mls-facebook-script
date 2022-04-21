@@ -168,7 +168,7 @@ class MLSBot:
                 self.driver.quit()
                 sys.exit("Bright MLS login failed. Check credentials or connection.")
 
-    def getListings(self):
+    def getListingsCSV(self):
         """
 
         Searches for and retrives listings from selected MLS website.
@@ -187,6 +187,37 @@ class MLSBot:
             # Designate price range, if any.
             if self.price_range != "":
                 self.try_find_element(By.ID, "Fm6_Ctrl40_TB").send_keys(self.price_range)
+            # Designate Virginia properties.
+            elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
+            elem.click()
+            # Search for properties.
+            elem = self.try_find_element(By.CSS_SELECTOR, "#m_ucSearchButtons_m_clblCount")
+            elem.click()
+            # Show search results.
+            elem = self.try_find_element(By.CSS_SELECTOR, ".linkIcon.icon_search")
+            elem.click()
+            # Select all listings.
+            elem = self.try_find_element(By.ID, "m_lnkCheckAllLink")
+            elem.click()
+            # Choose to export listings.
+            elem = self.try_find_element(By.CSS_SELECTOR, ".icon_export")
+            elem.click()
+            # Export listings.
+            elem = self.try_find_element(By.ID, "m_btnExport")
+            elem.click()
+
+    def getDefaultCSV(self):
+        """
+
+        Searches for and retrives listings from selected MLS website.
+        """
+        if self.site_id == 'Bright':
+            # Deletes old Bright CSV.
+            old_file = os.path.join(self.data_path, 'Agent One-Line.csv')
+            if os.path.exists(old_file):
+                os.remove(old_file)
+            # Navigate to residential search page.
+            search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
             # Designate Virginia properties.
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
             elem.click()
@@ -244,9 +275,58 @@ class MLSBot:
             print('Image could not be retrieved')
             return 0
 
-    def addListings(self):
+    def updateListings(self):
+        """
 
-        self.getListings()
+        Parses the existing prior listings against all listings. Updates and replaces list.
+        """
+        current_listings = os.path.join(self.data_path, 'Current Listings.csv')
+        # If current listings does not exist, program is running fresh. Create file with headers and return.
+        if not os.path.exists(current_listings):
+            file = open(self.data_path + 'Current Listings.csv', 'w+')
+            fileWriter = csv.writer(file)
+            fileWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+            file.close()
+            return
+        else:
+            # Current listings exists. Download all state listings and parse to update attributes.
+            self.getDefaultCSV()
+            file_wait = 0
+            while not os.path.exists(self.data_path + 'Agent One-Line.csv'):
+                time.sleep(1)
+                file_wait += 1
+                if file_wait > 10:
+                    break
+            # Parse both the current and all listings and write to new file.
+            allListingsFile = open(self.data_path + 'Agent One-Line.csv', 'r')
+            allListingsDict = csv.DictReader(allListingsFile)
+            currentListingsFile = open(self.data_path + 'Current Listings.csv', 'r')
+            currentListingsDict = csv.DictReader(currentListingsFile)
+            updatedListingsFile = open(self.data_path + 'Updated Listings.csv', 'w+', newline='')
+            updateWriter = csv.writer(updatedListingsFile)
+            updateWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+            updateDictWriter = csv.DictWriter(updatedListingsFile, fieldnames=['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+            for oldListingLine in currentListingsDict:
+                for newListingLine in allListingsDict:
+                    if oldListingLine['MLS #'] == newListingLine['MLS #']:
+                        updateDictWriter.writerow(newListingLine)
+                        break
+            updatedListingsFile.close()
+            allListingsFile.close()
+            currentListingsFile.close()
+            # Delete old files, designate new current listings.
+            old_current_listings = os.path.join(self.data_path, 'Current Listings.csv')
+            os.remove(old_current_listings)
+            all_listings = os.path.join(self.data_path, 'Agent One-Line.csv')
+            os.remove(all_listings)
+            os.rename(self.data_path + "\\Updated Listings.csv", self.data_path + "\\Current Listings.csv")
+            listings_as_dict = csv.DictReader(open(self.data_path + 'Current Listings.csv', 'r'))
+            for listing in listings_as_dict:
+                self.pullListingImg(listing['MLS #'])
+
+    def pullListings(self):
+
+        self.getListingsCSV()
         file_wait = 0
         while not os.path.exists(self.data_path + 'Agent One-Line.csv'):
             time.sleep(1)
@@ -271,6 +351,9 @@ class MLSBot:
             self.driver.quit()
             sys.exit("Error. CSV file failed to download. Check search parameters or internet connection.")
 
+    def addNewListings(self):
+
+
     def pullListingImg(self, MLS_NUM):
         self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
         image_dir = self.data_path + '\\Pictures\\'
@@ -294,16 +377,16 @@ class MLSBot:
         try:
             elem = self.driver.find_element(By.XPATH, "//img[@src='/Matrix/Images/cammulti.gif']")
         except:
-            elem = self.driver.find_element(By.XPATH, "//img[@src='/Matrix/Images/cam.gif']")
+            try:
+                elem = self.driver.find_element(By.XPATH, "//img[@src='/Matrix/Images/cam.gif']")
+            except:
+                return
 
         elem.click()
 
-
         elem = self.try_find_element(By.XPATH, "//*[contains(@src,'Type=1&Size=4&')]")
 
-
         img_url = str(elem.get_attribute('src'))
-
 
         elem = self.try_find_element(By.CSS_SELECTOR, "td[class='d115m5'] span[class='formula field NoPrint']")
 
@@ -311,10 +394,7 @@ class MLSBot:
         img_count = img_count.replace(')','')
         print(img_count)
 
-
-
         img_url = self.replacer(img_url,'',len(str(img_url)) - 1)
-
 
         #create new directory for new listing
         path = os.path.join(image_dir,MLS_NUM)
@@ -327,6 +407,7 @@ class MLSBot:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             self.img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
+    # DEPRECATED FUNCTION. DELETE AFTER REUSE.
     def checkListings(self):
         new_file = os.path.join(self.data_path, 'Current Listings.csv')
         if not os.path.exists(new_file):
@@ -532,29 +613,43 @@ class MarketBot:
 # num_properties = input("Enter the number of properties you would like post (optional): ")
 
 # Electron input
-browser_choice = sys.argv[1]
-MLS_username = sys.argv[2]
-MLS_pw = sys.argv[3]
-MLS_choice = sys.argv[4]
-FB_email = sys.argv[5]
-FB_pw = sys.argv[6]
-data_path = sys.argv[7]
-price_range = sys.argv[8]
-zip_code = sys.argv[9]
-num_properties = sys.argv[10]
-sys.stdout.flush()
+# browser_choice = sys.argv[1]
+# MLS_username = sys.argv[2]
+# MLS_pw = sys.argv[3]
+# MLS_choice = sys.argv[4]
+# FB_email = sys.argv[5]
+# FB_pw = sys.argv[6]
+# data_path = sys.argv[7]
+# price_range = sys.argv[8]
+# zip_code = sys.argv[9]
+# num_properties = sys.argv[10]
+# sys.stdout.flush()#
+# MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
+# MLS_test.initDriver()
+# FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+# FB_test.initDriver()
+# MLS_test.loginMLS()
+# BEGIN LOOP HERE
+# MLS_test.updateListings()
+# MLS_test.pullListings()
+# MLS_test.addNewListings()
 
 # MLS Test
-MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
-MLS_test.initDriver()
-MLS_test.loginMLS()
-MLS_test.addListings()
+# MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
+# MLS_test.initDriver()
+# MLS_test.loginMLS()
+# MLS_test.pullListings()
 # time.sleep(5000)
 
 # MarketBot Test
-FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-FB_test.initDriver()
-FB_test.loginFB()
-time.sleep(500)
+# FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+# FB_test.initDriver()
+# FB_test.loginFB()
+# time.sleep(500)
 # FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
 # time.sleep(5000)
+
+MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "", "300-400", 20111, 3)
+MLS_test.initDriver()
+MLS_test.loginMLS()
+MLS_test.updateListings()
