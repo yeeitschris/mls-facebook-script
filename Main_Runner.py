@@ -19,7 +19,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from getpass import getpass
 import time
 import requests
-from bs4 import BeautifulSoup
 import urllib.request
 from selenium.webdriver.common.keys import Keys
 from urllib.request import Request, urlopen
@@ -28,6 +27,7 @@ import csv
 import os
 import sys
 import random
+import shutil
 
 class MLSBot:
     """
@@ -165,8 +165,14 @@ class MLSBot:
                     EC.title_is('Dashboard | Bright MLS')
                 )
             except:
-                self.driver.quit()
-                sys.exit("Bright MLS login failed. Check credentials or connection.")
+                try:
+                    deprecated_login_leave = self.driver.get("https://www.brightmls.com/dashboard")
+                    wait = WebDriverWait(self.driver, 10).until(
+                        EC.title('Dashboard | Bright MLS')
+                    )
+                except:
+                    self.driver.quit()
+                    sys.exit("Bright MLS login failed. Check credentials or connection.")
 
     def getListingsCSV(self):
         """
@@ -251,8 +257,6 @@ class MLSBot:
         # insert the new string between "slices" of the original
         return s[:index] + newstring + s[index + 1:]
 
-    #git test
-
     def img_downloader(self, image_url, MLS_NUM, imgcount,path):
 
         # Set up the image URL and filename
@@ -334,7 +338,8 @@ class MLSBot:
             if file_wait > 10:
                 break
         if os.path.exists(self.data_path + 'Agent One-Line.csv'):
-            listings_as_dict = csv.DictReader(open(self.data_path + 'Agent One-Line.csv', 'r'))
+            listings_as_file = open(self.data_path + 'Agent One-Line.csv', 'r')
+            listings_as_dict = csv.DictReader(listings_as_file)
             iterable = list(listings_as_dict)
             if int(self.num_properties) < len(iterable):
                 if self.num_properties != 0:
@@ -347,12 +352,35 @@ class MLSBot:
 
             for randList in rnumber:
                 self.pullListingImg(iterable[randList]['MLS #'])
+            listings_as_file.close()
         else:
             self.driver.quit()
             sys.exit("Error. CSV file failed to download. Check search parameters or internet connection.")
 
     def addNewListings(self):
-
+        newListingsFile = open(self.data_path + 'Agent One-Line.csv', 'r')
+        newListingsDict = csv.DictReader(newListingsFile)
+        currentListingsFile = open(self.data_path + 'Current Listings.csv', 'r')
+        currentListingsDict = csv.DictReader(currentListingsFile)
+        shutil.copyfile(self.data_path + 'Current Listings.csv', self.data_path + 'Updated Listings.csv')
+        updatedListingsFile = open(self.data_path + 'Updated Listings.csv', 'a', newline='')
+        updateDictWriter = csv.DictWriter(updatedListingsFile, fieldnames=['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+        for newListingLine in newListingsDict:
+            match = False
+            for oldListingLine in currentListingsDict:
+                if oldListingLine['MLS #'] == newListingLine['MLS #']:
+                    match = True
+                    break
+            if match is False:
+                updateDictWriter.writerow(newListingLine)
+        updatedListingsFile.close()
+        newListingsFile.close()
+        currentListingsFile.close()
+        old_current_listings = os.path.join(self.data_path, 'Current Listings.csv')
+        os.remove(old_current_listings)
+        new_listings = os.path.join(self.data_path, 'Agent One-Line.csv')
+        os.remove(new_listings)
+        os.rename(self.data_path + "\\Updated Listings.csv", self.data_path + "\\Current Listings.csv")
 
     def pullListingImg(self, MLS_NUM):
         self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
@@ -403,7 +431,11 @@ class MLSBot:
         if os.path.isdir(path) != True:
             os.mkdir(path)
         #Download the image
-        for x in range (int(img_count)):
+        if int(img_count) < 50:
+            count = int(img_count)
+        else:
+            count = 50
+        for x in range (count):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             self.img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
@@ -503,6 +535,8 @@ class MarketBot:
         self.browser = browser
         self.fb_url = "https://www.facebook.com/"
         self.marketplace_url = "https://www.facebook.com/marketplace"
+        self.month_num_dict = {'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'June': 6,
+                            'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12}
 
     def try_find_element(self, type, target):
         """
@@ -577,14 +611,15 @@ class MarketBot:
             self.driver.quit()
             sys.exit("Facebook login failed. Check credentials or connection.")
 
-
-    def createListingFromMLS(self, MLS_NUM, structure_type, num_beds, num_baths, price, address):
+    def createListingFromMLS(self, MLS_NUM, structure_type, num_beds, num_baths, price, address, description):
         """
 
         Creates Facebook Marketplace listing from given parameters.
         """
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
+        # CHANGE OS.GETCWD()
         image_folder = os.getcwd() + "\\Data\\" + "\\Pictures\\" + MLS_NUM
+        image_count = 0
         for path in os.listdir(image_folder):
             photos_click = self.try_find_element(By.CSS_SELECTOR, "label:nth-child(2) > .mkhogb32").send_keys(os.path.join(image_folder, path))
         sale_or_rent = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Home for Sale or Rent"]').click()
@@ -594,11 +629,48 @@ class MarketBot:
         property_types = self.driver.find_elements(By.CSS_SELECTOR, '[aria-selected="false"]')
         if "Apartment" in structure_type:
             apartment_click = property_types[0].click()
+        if "Detached" in structure_type:
+            apartment_click = property_types[1].click()
+        if "Townhouse" in structure_type:
+            apartment_click = property_types[3].click()
         beds_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Number of bedrooms"]').send_keys(num_beds)
         baths_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Number of bathrooms"]').send_keys(num_baths)
         price_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Price"]').send_keys(price)
         address_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Property address"]').send_keys(address)
         suggestion_click = self.try_find_element(By.CSS_SELECTOR, '[aria-selected="false"]').click()
+        description_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Property description"]').send_keys(description)
+        next_click = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Next"]').click()
+        public_click = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Publish"]').click()
+        publish_wait = WebDriverWait(self.driver, 60).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="Create new listing"]'))
+        )
+        if publish_wait is None:
+            self.driver.quit()
+            sys.exit("ERROR. Facebook posting took too long. Check the listing or connection.")
+
+    def readFromCSV(self, mls_bot):
+        data_path = mls_bot.data_path
+        currentListingsFile = open(data_path + 'Current Listings.csv', 'r')
+        currentListingsDict = csv.DictReader(currentListingsFile)
+        for listing in currentListingsDict:
+            mls_num = listing['MLS #']
+            structure = str(listing['Structure Type'])
+            beds = listing['Beds']
+            baths = listing['Baths']
+            if str(baths).isnumeric() == False:
+                bath1, bath2 = str(baths).split('-')
+                if bath1 in month_num_dict:
+                    bath1 = month_num_dict[bath1]
+                if bath2 in month_num_dict:
+                    bath2 = month_num_dict[bath2]
+                baths = int(bath1) + int(bath2)
+            price = listing['Current Price']
+            address = str(listing['Address'] + ', ' + listing['City'] + ', VA')
+            description = "If interested, please contact! \n\n" + "MLS: " + str(mls_num) + "\nAddress: " + str(address)
+            self.createListingFromMLS(mls_num, structure, beds, baths, price, address, description)
+        currentListingsFile.close()
+
+# 'MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'
 
 # Init variables
 # browser_choice = input("Enter your browser (Chrome, Edge, or Firefox): ")
@@ -623,16 +695,21 @@ class MarketBot:
 # price_range = sys.argv[8]
 # zip_code = sys.argv[9]
 # num_properties = sys.argv[10]
-# sys.stdout.flush()#
+# sys.stdout.flush()
+
 # MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
-# MLS_test.initDriver()
+MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "D:\Chris\Code\Git\mls-facebook-script", "700-800", "22152", "10")
+MLS_test.initDriver()
 # FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-# FB_test.initDriver()
-# MLS_test.loginMLS()
+FB_test = MarketBot("mobhuiyan1998@yahoo.com", "Orpon1998!", "Chrome")
+FB_test.initDriver()
+MLS_test.loginMLS()
 # BEGIN LOOP HERE
-# MLS_test.updateListings()
-# MLS_test.pullListings()
-# MLS_test.addNewListings()
+MLS_test.updateListings()
+MLS_test.pullListings()
+MLS_test.addNewListings()
+FB_test.loginFB()
+FB_test.readFromCSV(MLS_test)
 
 # MLS Test
 # MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
@@ -649,7 +726,9 @@ class MarketBot:
 # FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
 # time.sleep(5000)
 
-MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "", "300-400", 20111, 3)
-MLS_test.initDriver()
-MLS_test.loginMLS()
-MLS_test.updateListings()
+# MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "", "700-800", 22152, 10)
+# MLS_test.initDriver()
+# MLS_test.loginMLS()
+# MLS_test.updateListings()
+# MLS_test.pullListings()
+# MLS_test.addNewListings()
