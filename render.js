@@ -1,5 +1,6 @@
 
 const ipcRenderer = require('electron').ipcRenderer;
+
 const sendInfo = () => {
     //send information to Main_Runner script to run back-end.
     ipcRenderer.send('sendInfo', document.querySelector('.browser_choice').value,
@@ -12,4 +13,15 @@ const sendInfo = () => {
      document.querySelector('.price_range').value,
      document.querySelector('.zip_code').value,
      document.querySelector('.num_properties').value)
+}
+
+ipcRenderer.on('receiveData', (event, data) => {
+    const errorTag = document.querySelector("#error");
+    errorTag.textContent = data;
+});
+
+function end()
+{
+    alert('this button works');
+    console.log(script_id);
 }
