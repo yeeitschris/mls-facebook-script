@@ -164,15 +164,14 @@ class MLSBot:
                 wait = WebDriverWait(self.driver, 10).until(
                     EC.title_is('Dashboard | Bright MLS')
                 )
-            except:
-                try:
-                    deprecated_login_leave = self.driver.get("https://www.brightmls.com/dashboard")
-                    wait = WebDriverWait(self.driver, 10).until(
-                        EC.title('Dashboard | Bright MLS')
-                    )
-                except:
-                    self.driver.quit()
-                    sys.exit("Bright MLS login failed. Check credentials or connection.")
+            except selenium.common.exceptions.TimeoutException:
+                deprecated_login_leave = self.driver.get("https://www.brightmls.com/dashboard")
+                wait = WebDriverWait(self.driver, 10).until(
+                    EC.title('Dashboard | Bright MLS')
+                )
+            except selenium.common.exceptions.TimeoutException:
+                self.driver.quit()
+                sys.exit("Bright MLS login failed. Check credentials or connection.")
 
     def getListingsCSV(self):
         """
@@ -431,11 +430,7 @@ class MLSBot:
         if os.path.isdir(path) != True:
             os.mkdir(path)
         #Download the image
-        if int(img_count) < 50:
-            count = int(img_count)
-        else:
-            count = 50
-        for x in range (count):
+        for x in range (int(img_count)):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             self.img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
@@ -618,10 +613,20 @@ class MarketBot:
         """
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
         # CHANGE OS.GETCWD()
-        image_folder = os.getcwd() + "\\Data\\" + "\\Pictures\\" + MLS_NUM
+        image_folder_name = os.getcwd() + "\\Data\\" + "\\Pictures\\" + MLS_NUM
+        image_folder = os.listdir(image_folder_name)
+        image_list = ""
         image_count = 0
-        for path in os.listdir(image_folder):
-            photos_click = self.try_find_element(By.CSS_SELECTOR, "label:nth-child(2) > .mkhogb32").send_keys(os.path.join(image_folder, path))
+        for i in range(len(image_folder)):
+            if i == len(image_folder) - 1 or image_count == 29:
+                image_list += (image_folder_name + "\\" + image_folder[i])
+            else:
+                image_list += (image_folder_name + "\\" + image_folder[i] + '\n')
+            if image_count == 29:
+                break
+            else:
+                image_count += 1
+        photo_send = self.try_find_element(By.CSS_SELECTOR, "label:nth-child(2) > .mkhogb32").send_keys(image_list)
         sale_or_rent = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Home for Sale or Rent"]').click()
         sale_types = self.driver.find_elements(By.CSS_SELECTOR, '[aria-selected="false"]')
         sale_click = sale_types[1].click()
@@ -640,11 +645,20 @@ class MarketBot:
         suggestion_click = self.try_find_element(By.CSS_SELECTOR, '[aria-selected="false"]').click()
         description_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Property description"]').send_keys(description)
         next_click = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Next"]').click()
-        public_click = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Publish"]').click()
-        publish_wait = WebDriverWait(self.driver, 60).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="Create new listing"]'))
-        )
-        if publish_wait is None:
+        time.sleep(40)
+        try:
+            publish_wait =  WebDriverWait(self.driver, 30).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, '[aria-label="Publish"]'))
+            )
+        except:
+            self.driver.quit()
+            sys.exit("ERROR. Publishing on Facebook Marketplace took too long. Check listing or connection.")
+        publish_wait.click()
+        try:
+            listing_posted_wait = WebDriverWait(self.driver, 60).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, '[aria-label="Create new listing"]'))
+            )
+        except:
             self.driver.quit()
             sys.exit("ERROR. Facebook posting took too long. Check the listing or connection.")
 
@@ -653,22 +667,32 @@ class MarketBot:
         currentListingsFile = open(data_path + 'Current Listings.csv', 'r')
         currentListingsDict = csv.DictReader(currentListingsFile)
         for listing in currentListingsDict:
+            if
             mls_num = listing['MLS #']
             structure = str(listing['Structure Type'])
             beds = listing['Beds']
             baths = listing['Baths']
             if str(baths).isnumeric() == False:
-                bath1, bath2 = str(baths).split('-')
-                if bath1 in month_num_dict:
-                    bath1 = month_num_dict[bath1]
-                if bath2 in month_num_dict:
-                    bath2 = month_num_dict[bath2]
-                baths = int(bath1) + int(bath2)
+                baths = 1
+                # baths_arr = str(baths).split('-')
+                # print(baths_arr)
+                # if baths_arr[0] in self.month_num_dict:
+                    # bath1 = self.month_num_dict[baths_arr[0]]
+                # else:
+                    # bath1 = baths_arr[0]
+                # if baths_arr[1] in self.month_num_dict:
+                    # bath2 = self.month_num_dict[baths_arr[1]]
+                # else:
+                    # bath2 = baths_arr[1]
+                # baths = int(bath1) + int(bath2)
             price = listing['Current Price']
             address = str(listing['Address'] + ', ' + listing['City'] + ', VA')
             description = "If interested, please contact! \n\n" + "MLS: " + str(mls_num) + "\nAddress: " + str(address)
             self.createListingFromMLS(mls_num, structure, beds, baths, price, address, description)
         currentListingsFile.close()
+
+    def checkIfListed(self, mls_num):
+        
 
 # 'MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'
 
