@@ -8,6 +8,7 @@ Created for CS 321 Section 004, Group 5. George Mason University, Spring 2022.
 Authors: Christopher Yi and Mohammed Bhuiyan
 """
 
+import selenium
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
@@ -16,11 +17,14 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from getpass import getpass
 import time
 import requests
 import urllib.request
-from selenium.webdriver.common.keys import Keys
 from urllib.request import Request, urlopen
 import shutil
 import csv
@@ -124,7 +128,8 @@ class MLSBot:
             chromeOptions.add_argument("--disable-extensions")
             chromeOptions.add_argument("--disable-notifications")
             chromeOptions.add_experimental_option("prefs", prefs)
-            self.driver = webdriver.Chrome(options = chromeOptions, executable_path = "WebDrivers/chromedriver.exe")
+            driver_path = ChromeService("WebDrivers/chromedriver.exe")
+            self.driver = webdriver.Chrome(service = driver_path, options = chromeOptions)
         elif self.browser == 'Edge':
             # self.driver = webdriver.Edge("WebDrivers/msedgedriver.exe")
             edgeOptions = webdriver.EdgeOptions()
@@ -133,7 +138,8 @@ class MLSBot:
             edgeOptions.add_argument("--disable-extensions")
             edgeOptions.add_argument("--disable-notifications")
             edgeOptions.add_experimental_option("prefs", prefs)
-            self.driver = webdriver.Edge(options = edgeOptions, executable_path = "WebDrivers/msedgedriver.exe")
+            driver_path = EdgeService("WebDrivers/msedgedriver.exe")
+            self.driver = webdriver.Edge(service = driver_path, options = edgeOptions)
         elif self.browser == 'Firefox':
             # self.driver = webdriver.Firefox("WebDrivers/geckodriver.exe")
             firefoxOptions = Options()
@@ -143,7 +149,8 @@ class MLSBot:
             firefoxOptions.add_argument("--disable-notifications")
             firefoxOptions.set_preference("browser.download.folderList", 2)
             firefoxOptions.set_preference("browser.download.dir", self.data_path)
-            self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
+            driver_path = FirefoxService("WebDrivers/geckodriver.exe")
+            self.driver = webdriver.Firefox(service = driver_path, options = firefoxOptions)
         else:
             sys.exit("Invalid browser!")
         self.driver.minimize_window()
@@ -165,13 +172,18 @@ class MLSBot:
                     EC.title_is('Dashboard | Bright MLS')
                 )
             except selenium.common.exceptions.TimeoutException:
-                deprecated_login_leave = self.driver.get("https://www.brightmls.com/dashboard")
-                wait = WebDriverWait(self.driver, 10).until(
-                    EC.title('Dashboard | Bright MLS')
-                )
-            except selenium.common.exceptions.TimeoutException:
-                self.driver.quit()
-                sys.exit("Bright MLS login failed. Check credentials or connection.")
+                if self.driver.title == "SSO | Bright MLS":
+                    self.driver.quit()
+                    sys.exit("Bright MLS login failed. Check credentials or connection.")
+                else:
+                    try:
+                        deprecated_login_leave = self.driver.get("https://www.brightmls.com/dashboard")
+                        wait = WebDriverWait(self.driver, 10).until(
+                            EC.title_is('Dashboard | Bright MLS')
+                        )
+                    except selenium.common.exceptions.TimeoutException:
+                        self.driver.quit()
+                        sys.exit("Bright MLS login failed. Check credentials or connection.")
 
     def getListingsCSV(self):
         """
@@ -569,21 +581,24 @@ class MarketBot:
             chromeOptions.add_argument("start-maximized")
             chromeOptions.add_argument("--disable-extensions")
             chromeOptions.add_argument("--disable-notifications")
-            self.driver = webdriver.Chrome(options = chromeOptions, executable_path = "WebDrivers/chromedriver.exe")
+            driver_path = ChromeService("WebDrivers/chromedriver.exe")
+            self.driver = webdriver.Chrome(service = driver_path, options = chromeOptions)
         elif self.browser == 'Edge':
             edgeOptions = webdriver.EdgeOptions()
             edgeOptions.add_argument("--disable-infobars")
             edgeOptions.add_argument("start-maximized")
             edgeOptions.add_argument("--disable-extensions")
             edgeOptions.add_argument("--disable-notifications")
-            self.driver = webdriver.Edge(options = edgeOptions, executable_path = "WebDrivers/msedgedriver.exe")
+            driver_path = EdgeService("WebDrivers/msedgedriver.exe")
+            self.driver = webdriver.Edge(service = driver_path, options = edgeOptions)
         elif self.browser == 'Firefox':
             firefoxOptions = Options()
             firefoxOptions.add_argument("--disable-infobars")
             firefoxOptions.add_argument("start-maximized")
             firefoxOptions.add_argument("--disable-extensions")
             firefoxOptions.add_argument("--disable-notifications")
-            self.driver = webdriver.Firefox(options = firefoxOptions, executable_path = "WebDrivers/geckodriver.exe")
+            driver_path = FirefoxService("WebDrivers/geckodriver.exe")
+            self.driver = webdriver.Firefox(service = driver_path, options = firefoxOptions)
         else:
             sys.exit("Invalid browser!")
         self.driver.minimize_window()
@@ -606,23 +621,23 @@ class MarketBot:
             self.driver.quit()
             sys.exit("Facebook login failed. Check credentials or connection.")
 
-    def createListingFromMLS(self, MLS_NUM, structure_type, num_beds, num_baths, price, address, description):
+    def createListingFromMLS(self, bot, MLS_NUM, structure_type, num_beds, num_baths, price, address, description):
         """
 
         Creates Facebook Marketplace listing from given parameters.
         """
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
         # CHANGE OS.GETCWD()
-        image_folder_name = os.getcwd() + "\\Data\\" + "\\Pictures\\" + MLS_NUM
+        image_folder_name = bot.data_path + "\\Pictures\\" + MLS_NUM
         image_folder = os.listdir(image_folder_name)
         image_list = ""
         image_count = 0
         for i in range(len(image_folder)):
-            if i == len(image_folder) - 1 or image_count == 29:
+            if i == len(image_folder) - 1 or image_count == 19:
                 image_list += (image_folder_name + "\\" + image_folder[i])
             else:
                 image_list += (image_folder_name + "\\" + image_folder[i] + '\n')
-            if image_count == 29:
+            if image_count == 19:
                 break
             else:
                 image_count += 1
@@ -645,7 +660,7 @@ class MarketBot:
         suggestion_click = self.try_find_element(By.CSS_SELECTOR, '[aria-selected="false"]').click()
         description_enter = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Property description"]').send_keys(description)
         next_click = self.try_find_element(By.CSS_SELECTOR, '[aria-label="Next"]').click()
-        time.sleep(40)
+        time.sleep(20)
         try:
             publish_wait =  WebDriverWait(self.driver, 30).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, '[aria-label="Publish"]'))
@@ -667,73 +682,49 @@ class MarketBot:
         currentListingsFile = open(data_path + 'Current Listings.csv', 'r')
         currentListingsDict = csv.DictReader(currentListingsFile)
         for listing in currentListingsDict:
-            if
             mls_num = listing['MLS #']
             structure = str(listing['Structure Type'])
             beds = listing['Beds']
             baths = listing['Baths']
             if str(baths).isnumeric() == False:
                 baths = 1
-                # baths_arr = str(baths).split('-')
-                # print(baths_arr)
-                # if baths_arr[0] in self.month_num_dict:
-                    # bath1 = self.month_num_dict[baths_arr[0]]
-                # else:
-                    # bath1 = baths_arr[0]
-                # if baths_arr[1] in self.month_num_dict:
-                    # bath2 = self.month_num_dict[baths_arr[1]]
-                # else:
-                    # bath2 = baths_arr[1]
-                # baths = int(bath1) + int(bath2)
             price = listing['Current Price']
             address = str(listing['Address'] + ', ' + listing['City'] + ', VA')
             description = "If interested, please contact! \n\n" + "MLS: " + str(mls_num) + "\nAddress: " + str(address)
-            self.createListingFromMLS(mls_num, structure, beds, baths, price, address, description)
+            self.createListingFromMLS(mls_bot, mls_num, structure, beds, baths, price, address, description)
         currentListingsFile.close()
 
-    def checkIfListed(self, mls_num):
-        
-
-# 'MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'
-
-# Init variables
-# browser_choice = input("Enter your browser (Chrome, Edge, or Firefox): ")
-# MLS_username = input("Enter your MLS username: ")
-# MLS_pw = getpass("Enter your MLS password: ")
-# MLS_choice = input("Enter the MLS site you are accessing (Bright, Zillow, Redfin): ")
-# FB_email = input("Enter your Facebook email: ")
-# FB_pw = getpass("Enter your Facebook password: ")
-# data_path = input("Enter which directory you would like to save listings/images to (leave blank for default): ")
-# price_range = input("Enter a desired price range (optional): ")
-# zip_code = input("Enter a desired ZIP/postal code (optional): ")
-# num_properties = input("Enter the number of properties you would like post (optional): ")
+################################################################################
+######################### Execution begins below ###############################
+################################################################################
 
 # Electron input
-# browser_choice = sys.argv[1]
-# MLS_username = sys.argv[2]
-# MLS_pw = sys.argv[3]
-# MLS_choice = sys.argv[4]
-# FB_email = sys.argv[5]
-# FB_pw = sys.argv[6]
-# data_path = sys.argv[7]
-# price_range = sys.argv[8]
-# zip_code = sys.argv[9]
-# num_properties = sys.argv[10]
-# sys.stdout.flush()
+browser_choice = sys.argv[1]
+MLS_username = sys.argv[2]
+MLS_pw = sys.argv[3]
+MLS_choice = sys.argv[4]
+FB_email = sys.argv[5]
+FB_pw = sys.argv[6]
+data_path = sys.argv[7]
+price_range = sys.argv[8]
+zip_code = sys.argv[9]
+num_properties = sys.argv[10]
+sys.stdout.flush()
 
-# MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
-MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "D:\Chris\Code\Git\mls-facebook-script", "700-800", "22152", "10")
+MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
+FB_test = MarketBot(FB_email, FB_pw, browser_choice)
 MLS_test.initDriver()
-# FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-FB_test = MarketBot("mobhuiyan1998@yahoo.com", "Orpon1998!", "Chrome")
 FB_test.initDriver()
 MLS_test.loginMLS()
+FB_test.loginFB()
 # BEGIN LOOP HERE
 MLS_test.updateListings()
 MLS_test.pullListings()
 MLS_test.addNewListings()
-FB_test.loginFB()
 FB_test.readFromCSV(MLS_test)
+
+# MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "D:\Chris\Code\Git\mls-facebook-script", "700-800", "22152", "10")
+# FB_test = MarketBot("mobhuiyan1998@yahoo.com", "Orpon1998!", "Chrome")
 
 # MLS Test
 # MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)

@@ -26,6 +26,7 @@ app.whenReady().then(createWindow);
 ipcMain.on('sendInfo', (event, browser_choice, MLS_username, MLS_pw, MLS_choice, FB_email, FB_pw, data_path, price_range, zip_code, num_properties) => {
     var python = require('child_process').spawn('python', ['./Main_Runner.py', browser_choice, MLS_username, MLS_pw, MLS_choice, FB_email, FB_pw, data_path, price_range, zip_code, num_properties]);
     script_id = python.pid;
+    win.webContents.send('receiveData', "");
     console.log(script_id);
     python.stderr.on('data', function(data){
         dataString = data.toString('utf8');
