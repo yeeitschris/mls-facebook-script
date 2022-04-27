@@ -33,6 +33,8 @@ import sys
 import random
 import shutil
 
+remove_list = []
+
 class MLSBot:
     """
 
@@ -96,10 +98,11 @@ class MLSBot:
         Parameter target: The target element being searched for.
         Precondition: Must be an existing web element or search will fail
         """
-        elem = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((type, target))
-        )
-        if elem is None:
+        try:
+            elem = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((type, target))
+            )
+        except:
             self.driver.quit()
             sys.exit("ERROR. Element couldn't be found. Check credentials, website, and connection.")
         return elem
@@ -321,11 +324,23 @@ class MLSBot:
             updateWriter = csv.writer(updatedListingsFile)
             updateWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
             updateDictWriter = csv.DictWriter(updatedListingsFile, fieldnames=['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+
             for oldListingLine in currentListingsDict:
                 for newListingLine in allListingsDict:
                     if oldListingLine['MLS #'] == newListingLine['MLS #']:
                         updateDictWriter.writerow(newListingLine)
                         break
+
+            for curLine in currentListingsDict:
+                flag = 0
+                for allLine in allListingsDict:
+                    if curLine['MLS #'] == allLine['MLS #']:
+                        flag = 1
+                        break
+                if flag == 1:
+                    continue
+                remove_list.append(curLine['MLS #'])
+
             updatedListingsFile.close()
             allListingsFile.close()
             currentListingsFile.close()
@@ -446,78 +461,6 @@ class MLSBot:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             self.img_downloader(img_url + str(x),MLS_NUM, str(x),path)
 
-    # DEPRECATED FUNCTION. DELETE AFTER REUSE.
-    def checkListings(self):
-        new_file = os.path.join(self.data_path, 'Current Listings.csv')
-        if not os.path.exists(new_file):
-            file = open(self.data_path + 'Current Listings.csv', 'w+')
-            file.close()
-        newList = csv.DictReader(open(self.data_path + 'Agent One-Line.csv', 'r'))
-        # Add code to create/overwrite current listings
-        curList = csv.DictReader(open(self.data_path + 'Current Listings.csv','r'))
-
-        # Only active MLS numbers
-        new_list_active = []
-        new_list_comingsoon = []
-        cur_list_active = []
-        cur_list_comingsoon = []
-
-        #new list
-        for line in newList:
-
-            if line['Status'] == 'ACT':
-                new_list_active.append(line['MLS #'])
-
-            if line['Status'] == 'C/S':
-                new_list_comingsoon.append(line['MLS #'])
-
-        #current list
-        for line in curList:
-
-            if line['Status'] == 'ACT':
-                cur_list_active.append(line['MLS #'])
-
-            if line['Status'] == 'C/S':
-                cur_list_comingsoon.append(line['MLS #'])
-
-
-        #New Listings
-        new_list_active = list(set(new_list_active).difference(set((cur_list_active))))
-        new_list_comingsoon = list(set(new_list_comingsoon).difference(set(cur_list_comingsoon)))
-
-        #Listings that need to be removed
-        remove_list_active = list(set(cur_list_active).difference(set((new_list_active))))
-        remove_list_comingsoon = list(set(cur_list_comingsoon).difference(set((new_list_comingsoon))))
-
-        #Listings that are the same
-        cur_list_active = list(set(new_list_active) & set(cur_list_active))
-        cur_list_comingsoon = list(set(new_list_comingsoon) & set(cur_list_comingsoon))
-
-        for mls_num in new_list_active:
-            self.addListing(mls_num.replace("'",""))
-
-
-        for mls_num in new_list_comingsoon:
-            self.addListing(mls_num.replace("'",""))
-
-
-        for mls_num in remove_list_active:
-            self.removeListing(mls_num.replace("'",""))
-
-
-        for mls_num in remove_list_comingsoon:
-            self.removeListing(mls_num.replace("'",""))
-
-
-        print(len(new_list_active))
-        print(len(new_list_comingsoon))
-
-        old_file = os.path.join(self.data_path, 'Current Listings.csv')
-        if os.path.exists(old_file):
-            os.remove(old_file)
-        os.rename(self.data_path + "\\Agent One-Line.csv", self.data_path + "\\Current Listings.csv")
-
-
 class MarketBot:
     """
 
@@ -627,7 +570,6 @@ class MarketBot:
         Creates Facebook Marketplace listing from given parameters.
         """
         self.driver.get("https://www.facebook.com/marketplace/create/rental")
-        # CHANGE OS.GETCWD()
         image_folder_name = bot.data_path + "\\Pictures\\" + MLS_NUM
         image_folder = os.listdir(image_folder_name)
         image_list = ""
@@ -682,6 +624,7 @@ class MarketBot:
         currentListingsFile = open(data_path + 'Current Listings.csv', 'r')
         currentListingsDict = csv.DictReader(currentListingsFile)
         for listing in currentListingsDict:
+
             mls_num = listing['MLS #']
             structure = str(listing['Structure Type'])
             beds = listing['Beds']
@@ -691,8 +634,40 @@ class MarketBot:
             price = listing['Current Price']
             address = str(listing['Address'] + ', ' + listing['City'] + ', VA')
             description = "If interested, please contact! \n\n" + "MLS: " + str(mls_num) + "\nAddress: " + str(address)
-            self.createListingFromMLS(mls_bot, mls_num, structure, beds, baths, price, address, description)
+
+            if self.checkIfListed(mls_num) == False:
+              self.createListingFromMLS(mls_bot, mls_num, structure, beds, baths, price, address, description)
+
         currentListingsFile.close()
+
+    def checkIfListed(self, mls_num):
+      self.driver.get("https://www.facebook.com/marketplace/you/selling?referral_surface=seller_hub")
+
+      try:
+        self.try_find_element(By.CSS_SELECTOR, "input[placeholder='Search your listings']").click()
+        self.try_find_element(By.CSS_SELECTOR, "input[placeholder='Search your listings']").send_keys(str(mls_num))
+      except:
+          return False
+
+      time.sleep(1)
+
+      try:
+        self.driver.find_element(By.XPATH, "//span[@class='d2edcug0 hpfvmrgz qv66sw1b c1et5uql lr9zc1uh a8c37x1j fe6kdd0r mau55g9w c8b282yb keod5gw0 nxhoafnm aigsh9s9 ns63r2gh iv3no6db o3w64lxj b2s5l15y hnhda86s m9osqain oqcyycmt']")
+        time.sleep(3)
+        return False
+      except:
+        return True
+
+    def deleteListings(self):
+
+        for mls_num in remove_list:
+          self.driver.get("https://www.facebook.com/marketplace/you/selling?referral_surface=seller_hub")
+          self.try_find_element(By.CSS_SELECTOR, "input[placeholder='Search your listings']").click()
+          self.try_find_element(By.CSS_SELECTOR, "input[placeholder='Search your listings']").send_keys(str(mls_num))
+          time.sleep(1)
+          self.try_find_element(By.CSS_SELECTOR, '[aria-label="More"]').click()
+          self.try_find_element(By.XPATH,"//*[ text() = 'Delete Listing']").click()
+          self.try_find_element(By.XPATH,"//*[ text() = 'Delete']").click()
 
 ################################################################################
 ######################### Execution begins below ###############################
@@ -715,13 +690,14 @@ MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, p
 FB_test = MarketBot(FB_email, FB_pw, browser_choice)
 MLS_test.initDriver()
 FB_test.initDriver()
-MLS_test.loginMLS()
+# BRIGHT IS BROKEN MLS_test.loginMLS()
 FB_test.loginFB()
 # BEGIN LOOP HERE
-MLS_test.updateListings()
-MLS_test.pullListings()
-MLS_test.addNewListings()
+# BRIGHT IS BROKEN MLS_test.updateListings()
+# BRIGHT IS BROKEN MLS_test.pullListings()
+# BRIGHT IS BROKEN MLS_test.addNewListings()
 FB_test.readFromCSV(MLS_test)
+#FB_test.deleteListings()
 
 # MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "D:\Chris\Code\Git\mls-facebook-script", "700-800", "22152", "10")
 # FB_test = MarketBot("mobhuiyan1998@yahoo.com", "Orpon1998!", "Chrome")
