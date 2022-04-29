@@ -317,6 +317,7 @@ class MLSBot:
             fileWriter = csv.writer(file)
             fileWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
             file.close()
+            self.assertTrue(os.path.exists(current_listings),"CSV Generation Error")
             return
         else:
             # Current listings exists. Download all state listings and parse to update attributes.
@@ -330,10 +331,13 @@ class MLSBot:
             # Parse both the current and all listings and write to new file.
             allListingsFile = open(self.data_path + 'Agent One-Line.csv', 'r')
             allListingsDict = csv.DictReader(allListingsFile)
+
             currentListingsFile = open(self.data_path + 'Current Listings.csv', 'r')
             currentListingsDict = csv.DictReader(currentListingsFile)
+
             updatedListingsFile = open(self.data_path + 'Updated Listings.csv', 'w+', newline='')
             updateWriter = csv.writer(updatedListingsFile)
+
             updateWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
             updateDictWriter = csv.DictWriter(updatedListingsFile, fieldnames=['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
 
