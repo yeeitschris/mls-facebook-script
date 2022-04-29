@@ -305,6 +305,7 @@ class MLSBot:
             fileWriter = csv.writer(file)
             fileWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
             file.close()
+            self.assertTrue(os.path.exists(current_listings),"CSV Generation Error")
             return
         else:
             # Current listings exists. Download all state listings and parse to update attributes.
@@ -318,10 +319,13 @@ class MLSBot:
             # Parse both the current and all listings and write to new file.
             allListingsFile = open(self.data_path + 'Agent One-Line.csv', 'r')
             allListingsDict = csv.DictReader(allListingsFile)
+
             currentListingsFile = open(self.data_path + 'Current Listings.csv', 'r')
             currentListingsDict = csv.DictReader(currentListingsFile)
+
             updatedListingsFile = open(self.data_path + 'Updated Listings.csv', 'w+', newline='')
             updateWriter = csv.writer(updatedListingsFile)
+
             updateWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
             updateDictWriter = csv.DictWriter(updatedListingsFile, fieldnames=['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
 
@@ -674,29 +678,33 @@ class MarketBot:
 ################################################################################
 
 # Electron input
-browser_choice = sys.argv[1]
-MLS_username = sys.argv[2]
-MLS_pw = sys.argv[3]
-MLS_choice = sys.argv[4]
-FB_email = sys.argv[5]
-FB_pw = sys.argv[6]
-data_path = sys.argv[7]
-price_range = sys.argv[8]
-zip_code = sys.argv[9]
-num_properties = sys.argv[10]
-sys.stdout.flush()
+#browser_choice = sys.argv[1]
+#MLS_username = sys.argv[2]
+#MLS_pw = sys.argv[3]
+#MLS_choice = sys.argv[4]
+#FB_email = sys.argv[5]
+#FB_pw = sys.argv[6]
+#data_path = sys.argv[7]
+#price_range = sys.argv[8]
+#zip_code = sys.argv[9]
+#num_properties = sys.argv[10]
+#sys.stdout.flush()
 
-MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
-FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-MLS_test.initDriver()
-FB_test.initDriver()
-# BRIGHT IS BROKEN MLS_test.loginMLS()
-FB_test.loginFB()
+#MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
+#FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+#MLS_test.initDriver()
+#FB_test.initDriver()
+# BRIGHT IS BROKEN 
+#MLS_test.loginMLS()
+#FB_test.loginFB()
 # BEGIN LOOP HERE
-# BRIGHT IS BROKEN MLS_test.updateListings()
-# BRIGHT IS BROKEN MLS_test.pullListings()
-# BRIGHT IS BROKEN MLS_test.addNewListings()
-FB_test.readFromCSV(MLS_test)
+# BRIGHT IS BROKEN 
+#MLS_test.updateListings() 
+# BRIGHT IS BROKEN 
+#MLS_test.pullListings()
+# BRIGHT IS BROKEN 
+#MLS_test.addNewListings()
+#FB_test.readFromCSV(MLS_test)
 #FB_test.deleteListings()
 
 # MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "D:\Chris\Code\Git\mls-facebook-script", "700-800", "22152", "10")
