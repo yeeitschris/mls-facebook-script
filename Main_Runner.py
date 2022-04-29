@@ -222,6 +222,12 @@ class MLSBot:
             # Choose to export listings.
             elem = self.try_find_element(By.CSS_SELECTOR, ".icon_export")
             elem.click()
+            # Open drag down
+            elem = self.try_find_element(By.ID, "m_ddExport")
+            elem.click()
+            # Select Agent One-Line
+            elem = self.try_find_element(By.XPATH, "//option[. = 'Agent One-Line']")
+            elem.click()
             # Export listings.
             elem = self.try_find_element(By.ID, "m_btnExport")
             elem.click()
@@ -252,6 +258,12 @@ class MLSBot:
             elem.click()
             # Choose to export listings.
             elem = self.try_find_element(By.CSS_SELECTOR, ".icon_export")
+            elem.click()
+            # Open drag down
+            elem = self.try_find_element(By.ID, "m_ddExport")
+            elem.click()
+            # Select Agent One-Line
+            elem = self.try_find_element(By.XPATH, "//option[. = 'Agent One-Line']")
             elem.click()
             # Export listings.
             elem = self.try_find_element(By.ID, "m_btnExport")
@@ -367,6 +379,12 @@ class MLSBot:
             listings_as_file = open(self.data_path + 'Agent One-Line.csv', 'r')
             listings_as_dict = csv.DictReader(listings_as_file)
             iterable = list(listings_as_dict)
+
+            updatedListingsFile = open(self.data_path + 'Updated Listings.csv', 'w+', newline='')
+            updateWriter = csv.writer(updatedListingsFile)
+            updateWriter.writerow(['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+            updateDictWriter = csv.DictWriter(updatedListingsFile, fieldnames=['MLS #', 'Cat', 'Status', 'Address', 'City', 'County', 'Beds', 'Baths', 'Structure Type', 'Status Contractual Search Date', 'List Office Name', 'Current Price'])
+
             if int(self.num_properties) < len(iterable):
                 if self.num_properties != 0:
                     rnumber = random.sample(range(0,int(len(iterable))), int(self.num_properties))
@@ -378,7 +396,12 @@ class MLSBot:
 
             for randList in rnumber:
                 self.pullListingImg(iterable[randList]['MLS #'])
+                updateDictWriter.writerow(iterable[randList])
             listings_as_file.close()
+            updatedListingsFile.close()
+            new_listings = os.path.join(self.data_path, 'Agent One-Line.csv')
+            os.remove(new_listings)
+            os.rename(self.data_path + "\\Updated Listings.csv", self.data_path + "\\Agent One-Line.csv")
         else:
             self.driver.quit()
             sys.exit("Error. CSV file failed to download. Check search parameters or internet connection.")
@@ -690,12 +713,12 @@ MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, p
 FB_test = MarketBot(FB_email, FB_pw, browser_choice)
 MLS_test.initDriver()
 FB_test.initDriver()
-# BRIGHT IS BROKEN MLS_test.loginMLS()
+MLS_test.loginMLS()
 FB_test.loginFB()
 # BEGIN LOOP HERE
-# BRIGHT IS BROKEN MLS_test.updateListings()
-# BRIGHT IS BROKEN MLS_test.pullListings()
-# BRIGHT IS BROKEN MLS_test.addNewListings()
+MLS_test.updateListings()
+MLS_test.pullListings()
+MLS_test.addNewListings()
 FB_test.readFromCSV(MLS_test)
 #FB_test.deleteListings()
 
