@@ -15,5 +15,9 @@
     "require": "^2.4.20"
   },
   "author": "Joan Garcia-Cruz",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.21.1",
+    "playwright": "^1.21.1"
+  }
 }
