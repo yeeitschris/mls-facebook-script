@@ -515,6 +515,7 @@ class MarketBot:
         Precondition: Limited to Chrome, Edge, or Firefox
         """
         self.email = email
+        self.data_path = None
         self.password = password
         self.browser = browser
         self.fb_url = "https://www.facebook.com/"
@@ -716,27 +717,27 @@ class MarketBot:
 ################################################################################
 
 # Electron input
-browser_choice = sys.argv[1]
-MLS_username = sys.argv[2]
-MLS_pw = sys.argv[3]
-MLS_choice = sys.argv[4]
-FB_email = sys.argv[5]
-FB_pw = sys.argv[6]
-data_path = sys.argv[7]
-price_range = sys.argv[8]
-zip_code = sys.argv[9]
-num_properties = sys.argv[10]
-sys.stdout.flush()
+#browser_choice = sys.argv[1]
+#MLS_username = sys.argv[2]
+#MLS_pw = sys.argv[3]
+#MLS_choice = sys.argv[4]
+#FB_email = sys.argv[5]
+#FB_pw = sys.argv[6]
+#data_path = sys.argv[7]
+#price_range = sys.argv[8]
+#zip_code = sys.argv[9]
+#num_properties = sys.argv[10]
+#sys.stdout.flush()
 
-MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
-FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-MLS_test.initDriver()
-FB_test.initDriver()
-MLS_test.loginMLS()
-FB_test.loginFB()
+#MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
+#FB_test = MarketBot(FB_email, FB_pw, browser_choice)
+#MLS_test.initDriver()
+#FB_test.initDriver()
+#MLS_test.loginMLS()
+#FB_test.loginFB()
 # BEGIN LOOP HERE
-MLS_test.updateListings()
-MLS_test.pullListings()
-MLS_test.addNewListings()
-FB_test.readFromCSV(MLS_test)
-FB_test.deleteListings()
+#MLS_test.updateListings()
+#MLS_test.pullLstings()
+#MLS_test.addNewListings()
+#FB_test.readFromCSV(MLS_test)
+#FB_test.deleteListings()
