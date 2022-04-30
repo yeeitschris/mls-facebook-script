@@ -104,7 +104,10 @@ class MLSBot:
             )
         except:
             self.driver.quit()
-            sys.exit("ERROR. Element couldn't be found. Check credentials, website, and connection.")
+            sys.exit("ERROR. Element couldn't be found." +
+            "\nElement type: " + type +
+            "\nElement target: " + target +
+            "\nCheck credentials, website, and connection.")
         return elem
 
     def initDriver(self):
@@ -244,6 +247,10 @@ class MLSBot:
                 os.remove(old_file)
             # Navigate to residential search page.
             search = self.driver.get("https://matrix.brightmls.com/Matrix/Search/ResidentialSale/Residential")
+            # Designate ZIP code, if any.
+            if self.zip_code != "":
+                self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").click()
+                self.try_find_element(By.ID, "Fm6_Ctrl36_TextBox").send_keys(self.zip_code)
             # Designate Virginia properties.
             elem = self.try_find_element(By.CSS_SELECTOR, "option[title='VA']")
             elem.click()
@@ -697,7 +704,15 @@ class MarketBot:
           self.try_find_element(By.XPATH,"//*[ text() = 'Delete']").click()
 
 ################################################################################
-######################### Execution begins below ###############################
+######## Testing area. Instantiate and call methods for testing here. ##########
+################################################################################
+################# Remove or comment out when executing below. ##################
+################################################################################
+
+################################################################################
+########################### Execution begins below. ############################
+################################################################################
+######### Commented out for testing. Uncomment for full functionality. #########
 ################################################################################
 
 # Electron input
@@ -724,29 +739,4 @@ MLS_test.updateListings()
 MLS_test.pullListings()
 MLS_test.addNewListings()
 FB_test.readFromCSV(MLS_test)
-#FB_test.deleteListings()
-
-# MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "D:\Chris\Code\Git\mls-facebook-script", "700-800", "22152", "10")
-# FB_test = MarketBot("mobhuiyan1998@yahoo.com", "Orpon1998!", "Chrome")
-
-# MLS Test
-# MLS_test = MLSBot(MLS_username, MLS_pw, browser_choice, MLS_choice, data_path, price_range, zip_code, num_properties)
-# MLS_test.initDriver()
-# MLS_test.loginMLS()
-# MLS_test.pullListings()
-# time.sleep(5000)
-
-# MarketBot Test
-# FB_test = MarketBot(FB_email, FB_pw, browser_choice)
-# FB_test.initDriver()
-# FB_test.loginFB()
-# time.sleep(500)
-# FB_test.createListingFromMLS("VAFX1160980", "Unit/Flat/Apartment", 2, 2, 339900, "12957 Centre Park Cir #206, Herndon, VA")
-# time.sleep(5000)
-
-# MLS_test = MLSBot("mobhuiyan98", "Iloverealestate4!", "Chrome", "Bright", "", "700-800", 22152, 10)
-# MLS_test.initDriver()
-# MLS_test.loginMLS()
-# MLS_test.updateListings()
-# MLS_test.pullListings()
-# MLS_test.addNewListings()
+FB_test.deleteListings()
